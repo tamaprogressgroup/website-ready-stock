@@ -35,4 +35,16 @@ return [
         ],
     ],
 
+    'hubspot' => [
+        'token'         => env('HUBSPOT_TOKEN'),
+        'portal_id'     => env('HUBSPOT_PORTAL_ID', '4801430'),
+        'form_new'      => env('HUBSPOT_FORM_NEW'),
+        'form_reengage' => env('HUBSPOT_FORM_REENGAGE'),
+    ],
+
+    'recaptcha' => [
+        'secret' => env('RECAPTCHA_SECRET_KEY'),
+        'score'  => env('RECAPTCHA_SKOR', 0.5),
+    ],
+
 ];
