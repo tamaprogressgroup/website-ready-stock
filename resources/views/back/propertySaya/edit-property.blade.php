@@ -322,7 +322,9 @@
                                 @if($fac->image)
                                     <img src="{{ Storage::url($fac->image) }}" class="fac-img-thumb mb-1 d-block">
                                 @endif
-                                <input type="file" class="form-control" name="facility_images[]" accept="image/*">
+                                <input type="file" class="form-control fac-img-input" name="facility_images[]" data-req-w="4096" data-req-h="2503" accept="image/*">
+                                <div style="font-size:11px; color:#777; margin-top:3px;"><i class="fas fa-ruler-combined me-1" style="color:#3065A3;"></i><strong>4096 × 2503</strong> px</div>
+                                <div class="dim-feedback" style="font-size:11px; margin-top:1px;"></div>
                                 <input type="hidden" name="facility_existing_imgs[]" value="{{ $fac->image ?? '' }}">
                             </div>
                             <div class="col-md-2 d-flex align-items-end pb-1">
@@ -347,7 +349,9 @@
                             </div>
                             <div class="col-md-3">
                                 <label class="form-label mb-1" style="font-size:12px;">Gambar (opsional)</label>
-                                <input type="file" class="form-control" name="facility_images[]" accept="image/*">
+                                <input type="file" class="form-control fac-img-input" name="facility_images[]" data-req-w="4096" data-req-h="2503" accept="image/*">
+                                <div style="font-size:11px; color:#777; margin-top:3px;"><i class="fas fa-ruler-combined me-1" style="color:#3065A3;"></i><strong>4096 × 2503</strong> px</div>
+                                <div class="dim-feedback" style="font-size:11px; margin-top:1px;"></div>
                                 <input type="hidden" name="facility_existing_imgs[]" value="">
                             </div>
                             <div class="col-md-2 d-flex align-items-end pb-1">
@@ -485,8 +489,10 @@
                             <p class="text-muted mt-1" style="font-size:11px;">Gambar saat ini. Pilih file baru untuk mengganti.</p>
                         </div>
                     @endif
-                    <input type="file" name="main_thumbnail" class="form-control @error('main_thumbnail') is-invalid @enderror" accept="image/*">
+                    <input type="file" name="main_thumbnail" class="form-control @error('main_thumbnail') is-invalid @enderror" data-req-w="4096" data-req-h="2298" accept="image/*">
                     @error('main_thumbnail')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                    <div class="mt-1" style="font-size:11px; color:#777;"><i class="fas fa-ruler-combined me-1" style="color:#3065A3;"></i>Dimensi: <strong>4096 × 2298</strong> px &nbsp;|&nbsp; Maks 10MB</div>
+                    <div class="dim-feedback" style="font-size:11px; margin-top:2px;"></div>
                 </div>
                 <div class="col-md-6 mb-4">
                     <label class="form-label fw-semibold" style="font-size:13px;">Mini Thumbnail</label>
@@ -496,8 +502,10 @@
                             <p class="text-muted mt-1" style="font-size:11px;">Gambar saat ini. Pilih file baru untuk mengganti.</p>
                         </div>
                     @endif
-                    <input type="file" name="mini_thumbnail" class="form-control @error('mini_thumbnail') is-invalid @enderror" accept="image/*">
+                    <input type="file" name="mini_thumbnail" class="form-control @error('mini_thumbnail') is-invalid @enderror" data-req-w="4096" data-req-h="2414" accept="image/*">
                     @error('mini_thumbnail')<div class="invalid-feedback">{{ $message }}</div>@enderror
+                    <div class="mt-1" style="font-size:11px; color:#777;"><i class="fas fa-ruler-combined me-1" style="color:#3065A3;"></i>Dimensi: <strong>4096 × 2414</strong> px &nbsp;|&nbsp; Maks 10MB</div>
+                    <div class="dim-feedback" style="font-size:11px; margin-top:2px;"></div>
                 </div>
             </div>
 
@@ -528,15 +536,13 @@
                 <label class="form-label fw-semibold" style="font-size:13px;">Tambah Foto Interior Baru</label>
                 <div id="container-interior-gallery">
                     <div class="row mb-3 dynamic-row align-items-center">
-                        <div class="col-md-5"><input type="file" name="interior_images[]" class="form-control gallery-input" accept="image/*"></div>
                         <div class="col-md-5">
-                            <select class="form-select" name="interior_labels[]">
-                                <option value="">-- Area Interior --</option>
-                                <option value="Ruang Tamu">Ruang Tamu</option>
-                                <option value="Kamar Tidur">Kamar Tidur</option>
-                                <option value="Dapur">Dapur</option>
-                                <option value="Lainnya">Lainnya</option>
-                            </select>
+                            <input type="file" name="interior_images[]" class="form-control gallery-input" data-req-w="4096" data-req-h="2298" accept="image/*">
+                            <div style="font-size:11px; color:#777; margin-top:3px;"><i class="fas fa-ruler-combined me-1" style="color:#3065A3;"></i><strong>4096 × 2298</strong> px</div>
+                            <div class="dim-feedback" style="font-size:11px; margin-top:1px;"></div>
+                        </div>
+                        <div class="col-md-5">
+                            <input type="text" class="form-control" name="interior_labels[]" placeholder="Nama area interior (cth: Ruang Tamu)">
                         </div>
                         <div class="col-md-2"><button type="button" class="btn btn-outline-danger btn-sm btn-delete"><i class="fas fa-trash"></i></button></div>
                     </div>
@@ -724,7 +730,9 @@ document.addEventListener('DOMContentLoaded', function() {
                 <div class="col-md-3">
                     <label class="form-label mb-1" style="font-size:12px;">Gambar (opsional)</label>
                     ${imgUrl ? `<img src="${imgUrl}" class="fac-img-thumb mb-1 d-block">` : ''}
-                    <input type="file" class="form-control" name="facility_images[]" accept="image/*">
+                    <input type="file" class="form-control fac-img-input" name="facility_images[]" data-req-w="4096" data-req-h="2503" accept="image/*">
+                    <div style="font-size:11px;color:#777;margin-top:3px;"><i class="fas fa-ruler-combined me-1" style="color:#3065A3;"></i><strong>4096 × 2503</strong> px</div>
+                    <div class="dim-feedback" style="font-size:11px;margin-top:1px;"></div>
                     <input type="hidden" name="facility_existing_imgs[]" value="${imgPath||''}">
                 </div>
                 <div class="col-md-2 d-flex align-items-end pb-1">
@@ -910,20 +918,47 @@ document.addEventListener('DOMContentLoaded', function() {
         (data.nearby?.length ? data.nearby : [{}]).forEach(n => nearbyCont.appendChild(makeNearbyRow(n.name||'')));
     }
 
+    // Dimension checker helper
+    function checkDim(src, reqW, reqH, fbEl) {
+        if (!fbEl || !reqW || !reqH) return;
+        const tmp = new Image();
+        tmp.onload = function() {
+            const ok = tmp.width === reqW && tmp.height === reqH;
+            fbEl.innerHTML = `Dimensi: <strong>${tmp.width} × ${tmp.height}</strong> `
+                + (ok ? '<span class="text-success"><i class="fas fa-check-circle"></i> Sesuai</span>'
+                      : `<span class="text-danger"><i class="fas fa-times-circle"></i> Harus ${reqW} × ${reqH}</span>`);
+        };
+        tmp.src = src;
+    }
+
+    // Image dimension preview for all inputs with data-req-w/h
+    document.body.addEventListener('change', function(e) {
+        const inp = e.target;
+        if (inp.tagName !== 'INPUT' || inp.type !== 'file') return;
+        const reqW = parseInt(inp.dataset.reqW || 0);
+        const reqH = parseInt(inp.dataset.reqH || 0);
+        if (!reqW || !reqH) return;
+        const file = inp.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = ev => {
+            checkDim(ev.target.result, reqW, reqH, inp.parentElement?.querySelector('.dim-feedback'));
+        };
+        reader.readAsDataURL(file);
+    });
+
     // Interior add row
     document.getElementById('btn-add-interior').addEventListener('click', function() {
         const row = document.createElement('div');
         row.className = 'row mb-3 dynamic-row align-items-center';
         row.innerHTML = `
-            <div class="col-md-5"><input type="file" name="interior_images[]" class="form-control gallery-input" accept="image/*"></div>
             <div class="col-md-5">
-                <select class="form-select" name="interior_labels[]">
-                    <option value="">-- Area Interior --</option>
-                    <option value="Ruang Tamu">Ruang Tamu</option>
-                    <option value="Kamar Tidur">Kamar Tidur</option>
-                    <option value="Dapur">Dapur</option>
-                    <option value="Lainnya">Lainnya</option>
-                </select>
+                <input type="file" name="interior_images[]" class="form-control gallery-input" data-req-w="4096" data-req-h="2298" accept="image/*">
+                <div style="font-size:11px;color:#777;margin-top:3px;"><i class="fas fa-ruler-combined me-1" style="color:#3065A3;"></i><strong>4096 × 2298</strong> px</div>
+                <div class="dim-feedback" style="font-size:11px;margin-top:1px;"></div>
+            </div>
+            <div class="col-md-5">
+                <input type="text" class="form-control" name="interior_labels[]" placeholder="Nama area interior (cth: Ruang Tamu)">
             </div>
             <div class="col-md-2"><button type="button" class="btn btn-outline-danger btn-sm btn-delete"><i class="fas fa-trash"></i></button></div>`;
         document.getElementById('container-interior-gallery').appendChild(row);

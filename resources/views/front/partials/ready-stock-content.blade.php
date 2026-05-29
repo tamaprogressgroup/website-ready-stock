@@ -165,7 +165,7 @@
     </section>
 
     {{-- ===================== REKOMENDASI PROPERTI ===================== --}}
-    <div class="container py-5 mt-3">
+    <div class="container py-5 mt-3" id="rekomendasi-properti" style="scroll-margin-top: 80px;">
         <div class="row align-items-center mb-4">
             <div class="col-8">
                 <h2 class="font-weight-bold text-6 mb-0 text-color-dark poppins-semibold" style="font-size: 25px;">Rekomendasi Properti</h2>
@@ -195,7 +195,7 @@
     </div>
 
     {{-- ===================== PROPERTI BARU ===================== --}}
-    <div class="container pb-5">
+    <div class="container pb-5" id="properti-baru" style="scroll-margin-top: 80px;">
         <div class="row align-items-center mb-4">
             <div class="col-8">
                 <h2 class="poppins-semibold text-6 mb-0 text-color-dark" style="font-size: 25px;">Properti Baru - Siap Huni</h2>
@@ -233,7 +233,7 @@
 
     {{-- ===================== PROPERTI BY PROJECT ===================== --}}
     @if(count($townships) > 0)
-    <div class="container pb-5 mb-3">
+    <div class="container pb-5 mb-3" id="properti-by-project" style="scroll-margin-top: 80px;">
         <h2 class="poppins-semibold text-6 mb-4" style="font-size: 25px;">Properti by Project</h2>
         <div class="row g-3">
             @foreach ($townships as $t)

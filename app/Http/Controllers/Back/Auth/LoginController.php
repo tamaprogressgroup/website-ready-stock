@@ -13,7 +13,7 @@ class LoginController extends Controller
     public function showLogin()
     {
         if (Auth::guard('admin')->check()) {
-            return redirect()->route('customer.dashboard');
+            return redirect()->route('customer.property');
         }
 
         return view('back.auth.login');
@@ -54,7 +54,7 @@ class LoginController extends Controller
         Auth::guard('admin')->login($admin, $request->boolean('remember'));
         $request->session()->regenerate();
 
-        return redirect()->intended(route('customer.dashboard'));
+        return redirect()->intended(route('customer.property'));
     }
 
     public function logout(Request $request)

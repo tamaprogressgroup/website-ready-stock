@@ -11,7 +11,7 @@
             @endforeach
         </div>
         @endif
-        <img src="{{ $prop['image'] }}" alt="{{ $prop['title'] }}" class="property-card-img">
+        <img src="{{ asset($prop['image']) }}" alt="{{ $prop['title'] }}" class="property-card-img">
     </div>
     <div class="card-body px-0 py-3">
         <div class="d-flex justify-content-between align-items-center mb-2">

@@ -7,12 +7,6 @@
         <p class="text-muted text-uppercase font-weight-bold mb-2 px-3" style="font-size: 11px; letter-spacing: 1px;">Menu Utama</p>
         <ul class="sidebar-menu list-unstyled m-0">
             <li class="mb-1">
-                <a href="{{ route('customer.dashboard') }}" class="text-decoration-none d-flex align-items-center p-3 rounded-lg {{ request()->routeIs('customer.dashboard') ? 'bg-primary text-white shadow-sm' : 'text-secondary hover-bg-light' }}" style="transition: all 0.3s ease; border-radius: 8px;">
-                    <i class="fas fa-tv me-3 {{ request()->routeIs('customer.dashboard') ? 'text-white' : 'text-primary' }}" style="font-size: 1.1rem; width: 20px; text-align: center;"></i>
-                    <span class="font-weight-semibold" style="font-size: 14px;">Dashboard</span>
-                </a>
-            </li>
-            <li class="mb-1">
                 <a href="{{ route('customer.property') }}" class="text-decoration-none d-flex align-items-center p-3 rounded-lg {{ request()->routeIs('customer.property*') ? 'bg-primary text-white shadow-sm' : 'text-secondary hover-bg-light' }}" style="transition: all 0.3s ease; border-radius: 8px;">
                     <i class="fas fa-home me-3 {{ request()->routeIs('customer.property*') ? 'text-white' : 'text-primary' }}" style="font-size: 1.1rem; width: 20px; text-align: center;"></i>
                     <span class="font-weight-semibold" style="font-size: 14px;">Property Saya</span>

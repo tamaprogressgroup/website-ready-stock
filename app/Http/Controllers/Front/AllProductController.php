@@ -117,8 +117,8 @@ class AllProductController extends BaseFrontController
                 ->toArray()
         );
 
-        $banner = $this->resolveCache('banners_homepage_atas', '', fn() =>
-            Banner::where('position', 'HOMEPAGE_ATAS')
+        $banner = $this->resolveCache('banners_allproduct_tengah', '', fn() =>
+            Banner::where('position', 'ALLPRODUCT_TENGAH')
                 ->where('is_active', 1)->orderBy('priority')
                 ->first()?->toArray() ?? []
         );

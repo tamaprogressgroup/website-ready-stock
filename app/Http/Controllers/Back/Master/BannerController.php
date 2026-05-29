@@ -14,12 +14,19 @@ class BannerController extends Controller
 {
     // Daftar pilihan posisi banner
     public const POSITIONS = [
-        'HOMEPAGE_ATAS'    => 'Homepage Atas',
-        'HOMEPAGE_TENGAH'  => 'Homepage Tengah',
-        'HOMEPAGE_BAWAH'   => 'Homepage Bawah',
-        'ALLPRODUCT_ATAS'  => 'All Product Atas',
-        'ALLPRODUCT_BAWAH' => 'All Product Bawah',
-        'DETAIL_ATAS'      => 'Detail Properti Atas',
+        'HOMEPAGE_ATAS'     => 'Homepage Atas',
+        'HOMEPAGE_TENGAH'   => 'Homepage Tengah',
+        'HOMEPAGE_BAWAH'    => 'Homepage Bawah',
+        'ALLPRODUCT_ATAS'   => 'All Product Atas',
+        'ALLPRODUCT_TENGAH' => 'All Product Tengah',
+        'ALLPRODUCT_BAWAH'  => 'All Product Bawah',
+        'DETAIL_ATAS'       => 'Detail Properti Atas',
+    ];
+
+    // Dimensi wajib per posisi  [width, height]
+    private const DIM = [
+        'ALLPRODUCT_TENGAH' => [1536, 1024],
+        'default'           => [3520, 1216],
     ];
 
     public function index()
@@ -38,15 +45,16 @@ class BannerController extends Controller
 
     public function store(Request $request)
     {
+        [$w, $h]  = self::DIM[$request->input('position', '')] ?? self::DIM['default'];
         $request->validate([
-            'image'      => 'required|image|mimes:jpeg,png,jpg,webp|max:10240|dimensions:width=3520,height=1216',
+            'image'      => "required|image|mimes:jpeg,png,jpg,webp|max:10240|dimensions:width={$w},height={$h}",
             'target_url' => 'nullable|url|max:500',
             'position'   => 'required|string|in:' . implode(',', array_keys(self::POSITIONS)),
             'priority'   => 'required|integer|min:1',
             'is_active'  => 'nullable|boolean',
         ], [
             'image.max'        => 'Ukuran file banner tidak boleh lebih dari 10 MB.',
-            'image.dimensions' => 'Gambar banner harus berukuran tepat 3520 × 1216 piksel.',
+            'image.dimensions' => "Gambar banner harus berukuran tepat {$w} × {$h} piksel.",
             'position.in'      => 'Posisi banner tidak valid.',
             'priority.required'=> 'Urutan prioritas wajib diisi.',
         ]);
@@ -78,15 +86,16 @@ class BannerController extends Controller
 
     public function update(Request $request, $id)
     {
+        [$w, $h]  = self::DIM[$request->input('position', '')] ?? self::DIM['default'];
         $request->validate([
-            'image'      => 'nullable|image|mimes:jpeg,png,jpg,webp|max:10240|dimensions:width=3520,height=1216',
+            'image'      => "nullable|image|mimes:jpeg,png,jpg,webp|max:10240|dimensions:width={$w},height={$h}",
             'target_url' => 'nullable|url|max:500',
             'position'   => 'required|string|in:' . implode(',', array_keys(self::POSITIONS)),
             'priority'   => 'required|integer|min:1',
             'is_active'  => 'nullable|boolean',
         ], [
             'image.max'        => 'Ukuran file banner tidak boleh lebih dari 10 MB.',
-            'image.dimensions' => 'Gambar banner harus berukuran tepat 3520 × 1216 piksel.',
+            'image.dimensions' => "Gambar banner harus berukuran tepat {$w} × {$h} piksel.",
             'position.in'      => 'Posisi banner tidak valid.',
         ]);
 

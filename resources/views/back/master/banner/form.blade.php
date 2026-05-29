@@ -36,9 +36,9 @@
                         <label class="form-label fw-semibold" style="font-size:13px;">
                             Gambar Banner {!! $item ? '<span class="text-muted fw-normal">(kosongkan jika tidak ingin mengganti)</span>' : '<span class="text-danger">*</span>' !!}
                         </label>
-                        <div class="mb-2 p-3 rounded-3" style="background:#f0f4f8; font-size:12px; border:1px dashed #bcd0e8;">
+                        <div class="mb-2 p-3 rounded-3" style="background:#f0f4f8; font-size:12px; border:1px dashed #bcd0e8;" id="dim-hint">
                             <i class="fas fa-ruler-combined me-1" style="color:#3065A3;"></i>
-                            Dimensi wajib: <strong>3520 × 1216 piksel</strong> &nbsp;|&nbsp;
+                            Dimensi wajib: <strong id="dim-hint-text">3520 × 1216 piksel</strong> &nbsp;|&nbsp;
                             <i class="fas fa-weight-hanging me-1" style="color:#3065A3;"></i>
                             Maks: <strong>10 MB</strong> &nbsp;|&nbsp;
                             Format: JPG, PNG, WebP
@@ -66,7 +66,7 @@
                     {{-- Posisi (dropdown) --}}
                     <div class="mb-4">
                         <label class="form-label fw-semibold" style="font-size:13px;">Posisi Banner <span class="text-danger">*</span></label>
-                        <select name="position" class="form-select @error('position') is-invalid @enderror"
+                        <select name="position" id="banner-position" class="form-select @error('position') is-invalid @enderror"
                                 style="border-radius:8px; height:44px;" required>
                             <option value="">-- Pilih Posisi --</option>
                             @foreach($positions as $key => $label)
@@ -135,6 +135,32 @@
 </div>
 
 <script>
+// Dimensi wajib per posisi
+const BANNER_DIMS = {
+    'ALLPRODUCT_TENGAH': [1536, 1024],
+    'default':           [3520, 1216],
+};
+
+function getRequiredDim() {
+    const pos = document.getElementById('banner-position')?.value || '';
+    return BANNER_DIMS[pos] || BANNER_DIMS['default'];
+}
+
+// Update hint text when position changes
+document.getElementById('banner-position')?.addEventListener('change', function() {
+    const [w, h] = getRequiredDim();
+    document.getElementById('dim-hint-text').textContent = w + ' × ' + h + ' piksel';
+    // Re-validate if file already selected
+    const input = document.getElementById('banner-image');
+    if (input?.files?.length) previewBanner(input);
+});
+
+// Set hint on page load (for edit page with existing position)
+(function() {
+    const [w, h] = getRequiredDim();
+    document.getElementById('dim-hint-text').textContent = w + ' × ' + h + ' piksel';
+})();
+
 function previewBanner(input) {
     const preview = document.getElementById('banner-preview');
     const img     = document.getElementById('banner-preview-img');
@@ -151,6 +177,8 @@ function previewBanner(input) {
         return;
     }
 
+    const [reqW, reqH] = getRequiredDim();
+
     const reader = new FileReader();
     reader.onload = function(e) {
         img.src = e.target.result;
@@ -158,11 +186,11 @@ function previewBanner(input) {
 
         const tempImg = new Image();
         tempImg.onload = function() {
-            const ok = tempImg.width === 3520 && tempImg.height === 1216;
+            const ok = tempImg.width === reqW && tempImg.height === reqH;
             dimText.innerHTML = `Dimensi: <strong>${tempImg.width} × ${tempImg.height}</strong>&nbsp;`
                 + (ok
                     ? '<span class="text-success"><i class="fas fa-check-circle"></i> Sesuai</span>'
-                    : '<span class="text-danger"><i class="fas fa-times-circle"></i> Harus tepat 3520 × 1216</span>');
+                    : `<span class="text-danger"><i class="fas fa-times-circle"></i> Harus tepat ${reqW} × ${reqH}</span>`);
         };
         tempImg.src = e.target.result;
     };
