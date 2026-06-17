@@ -87,13 +87,13 @@
                     </div>
                     <div class="mb-4 d-flex align-items-center">
                         <input type="checkbox" name="remember" id="remember" class="form-check-input me-2">
-                        <label for="remember" class="form-check-label text-secondary" style="font-size:13px;">Ingat saya</label>
+                        <!-- <label for="remember" class="form-check-label text-secondary" style="font-size:13px;">Ingat saya</label> -->
                     </div>
                     <button type="submit" class="btn btn-login text-white w-100 mb-3">
                         <i class="fas fa-sign-in-alt me-2"></i> Masuk
                     </button>
 
-                    <div class="d-flex align-items-center my-3">
+                    {{-- <div class="d-flex align-items-center my-3">
                         <hr class="flex-grow-1" style="border-color:#e0e0e0;">
                         <span class="mx-3 text-muted" style="font-size:12px;">atau</span>
                         <hr class="flex-grow-1" style="border-color:#e0e0e0;">
@@ -101,7 +101,7 @@
 
                     <a href="{{ route('back.register') }}" class="btn w-100 fw-semibold" style="border:2px solid #3065A3; color:#3065A3; border-radius:8px; height:48px; font-size:15px; display:flex; align-items:center; justify-content:center;">
                         <i class="fas fa-user-plus me-2"></i> Daftar Akun Baru
-                    </a>
+                    </a> --}}
                 </form>
             </div>
         </div>

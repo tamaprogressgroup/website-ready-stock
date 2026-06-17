@@ -360,7 +360,7 @@
         <div class="row">
             @forelse (array_slice($properties, 0, 8) as $prop)
             <div class="col-lg-3 col-md-6 mb-4">
-                <div class="card border border-color-grey-1 bg-white h-100" style="border-radius: 12px; box-shadow: 0 2px 5px rgba(0,0,0,0.05);">
+                <div class="card border border-color-grey-1 bg-white h-100" style="border-radius: 12px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); cursor:pointer;" onclick="window.location='{{ $prop['detail_url'] }}'">
                     <div class="position-relative p-2">
                         <div class="position-absolute top-0 left-0 pt-3 ms-3 z-index-1">
                             @foreach ($prop['badges'] as $badge)
@@ -372,7 +372,7 @@
                     <div class="card-body px-3 py-2">
                         <div class="d-flex justify-content-between align-items-center mb-1">
                             <h4 class="font-weight-bold text-4 mb-0" style="color: #3b5998;">{{ $prop['price'] }}</h4>
-                            <a href="{{ $prop['detail_url'] }}"><i class="fas fa-arrow-right" style="color: #3b5998; font-size: 14px;"></i></a>
+                            <a href="{{ $prop['detail_url'] }}" onclick="event.stopPropagation()"><i class="fas fa-arrow-right" style="color: #3b5998; font-size: 14px;"></i></a>
                         </div>
                         <h5 class="font-weight-semibold text-3 mb-1 mt-2" style="line-height: 1.3; color: #333; height: 38px; overflow: hidden; font-size: 14px;">{{ $prop['title'] }}</h5>
                         <p class="mb-2" style="font-size: 11px; color: #888;">{{ $prop['location'] }}</p>
@@ -382,7 +382,7 @@
                             <div>LT <span class="font-weight-bold text-color-dark ms-1">{{ $prop['lt'] }}m²</span></div>
                             <div>LB <span class="font-weight-bold text-color-dark ms-1">{{ $prop['lb'] }}m²</span></div>
                         </div>
-                        <a href="{{ $prop['detail_url'] }}" class="btn w-100 font-weight-bold py-2 text-color-light" style="background-color: #61c97d; border-radius: 8px; border: none; font-size: 13px;">
+                        <a href="{{ $prop['wa_url'] }}" target="_blank" onclick="event.stopPropagation()" class="btn w-100 font-weight-bold py-2 text-color-light" style="background-color: #61c97d; border-radius: 8px; border: none; font-size: 13px;">
                             <i class="fab fa-whatsapp me-2 text-4"></i> WhatsApp
                         </a>
                     </div>
@@ -417,7 +417,7 @@
         <div class="row">
             @foreach (array_slice($properties, 8) as $prop)
             <div class="col-lg-3 col-md-6 mb-4">
-                <div class="card border border-color-grey-1 bg-white h-100" style="border-radius: 12px; box-shadow: 0 2px 5px rgba(0,0,0,0.05);">
+                <div class="card border border-color-grey-1 bg-white h-100" style="border-radius: 12px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); cursor:pointer;" onclick="window.location='{{ $prop['detail_url'] }}'">
                     <div class="position-relative p-2">
                         <div class="position-absolute top-0 left-0 pt-3 ms-3 z-index-1">
                             @foreach ($prop['badges'] as $badge)
@@ -429,7 +429,7 @@
                     <div class="card-body px-3 py-2">
                         <div class="d-flex justify-content-between align-items-center mb-1">
                             <h4 class="font-weight-bold text-4 mb-0" style="color: #3b5998;">{{ $prop['price'] }}</h4>
-                            <a href="{{ $prop['detail_url'] }}"><i class="fas fa-arrow-right" style="color: #3b5998; font-size: 14px;"></i></a>
+                            <a href="{{ $prop['detail_url'] }}" onclick="event.stopPropagation()"><i class="fas fa-arrow-right" style="color: #3b5998; font-size: 14px;"></i></a>
                         </div>
                         <h5 class="font-weight-semibold text-3 mb-1 mt-2" style="line-height: 1.3; color: #333; height: 38px; overflow: hidden; font-size: 14px;">{{ $prop['title'] }}</h5>
                         <p class="mb-2" style="font-size: 11px; color: #888;">{{ $prop['location'] }}</p>
@@ -439,7 +439,7 @@
                             <div>LT <span class="font-weight-bold text-color-dark ms-1">{{ $prop['lt'] }}m²</span></div>
                             <div>LB <span class="font-weight-bold text-color-dark ms-1">{{ $prop['lb'] }}m²</span></div>
                         </div>
-                        <a href="{{ $prop['detail_url'] }}" class="btn w-100 font-weight-bold py-2 text-color-light" style="background-color: #61c97d; border-radius: 8px; border: none; font-size: 13px;">
+                        <a href="{{ $prop['wa_url'] }}" target="_blank" onclick="event.stopPropagation()" class="btn w-100 font-weight-bold py-2 text-color-light" style="background-color: #61c97d; border-radius: 8px; border: none; font-size: 13px;">
                             <i class="fab fa-whatsapp me-2 text-4"></i> WhatsApp
                         </a>
                     </div>

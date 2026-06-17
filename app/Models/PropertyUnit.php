@@ -18,7 +18,7 @@ class PropertyUnit extends Model
         'property_type_id', 'price', 'bedrooms', 'bathroom', 'land_area',
         'building_area', 'carports', 'electricity', 'is_active',
         'created_user_id', 'created_datetime', 'updated_user_id', 'updated_datetime',
-        'condition_id', 'diskon', 'township_id', 'cluster_id', 'slug', 
+        'condition_id', 'diskon', 'township_id', 'cluster_id', 'slug', 'no_hp',
     ];
 
     public function kota(): BelongsTo

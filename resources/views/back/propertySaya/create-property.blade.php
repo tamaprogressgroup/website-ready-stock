@@ -173,6 +173,11 @@
                         <input type="text" class="form-control py-2" name="title" value="{{ old('title') }}" placeholder="Contoh: Rumah Modern 2 Lantai di Serpong">
                     </div>
                     <div class="mb-4">
+                        <label class="form-label text-dark fw-semibold">No. HP / WhatsApp Agen</label>
+                        <p class="text-muted mb-2" style="font-size:12px;">Nomor ini digunakan untuk tombol WhatsApp di halaman properti. Format: 08xxx atau 628xxx.</p>
+                        <input type="tel" class="form-control py-2" name="no_hp" value="{{ old('no_hp') }}" placeholder="Contoh: 08172856666 atau 628172856666">
+                    </div>
+                    <div class="mb-4">
                         <label class="form-label text-dark fw-semibold">Deskripsi Properti <span class="badge-wajib">Wajib</span></label>
                         <textarea class="form-control" name="description" rows="5" placeholder="Ceritakan detail menarik tentang properti ini...">{{ old('description') }}</textarea>
                     </div>

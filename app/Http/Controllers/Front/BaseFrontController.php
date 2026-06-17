@@ -80,6 +80,7 @@ abstract class BaseFrontController extends Controller
         return [
             'property_id' => $unit->property_id,
             'detail_url'  => $this->buildDetailUrl($unit),
+            'wa_url'      => $this->buildWaUrl($unit),
             'badges'      => $badges,
             'image'       => $image,
             'price'       => $this->formatPrice($price, $diskon),
@@ -92,6 +93,21 @@ abstract class BaseFrontController extends Controller
             'lt'          => $unit->land_area     ?? 0,
             'lb'          => $unit->building_area ?? 0,
         ];
+    }
+
+    protected function buildWaUrl(PropertyUnit $unit): string
+    {
+        $phone = preg_replace('/\D/', '', $unit->no_hp ?? '');
+        if (!$phone) return '#';
+        if (str_starts_with($phone, '0')) {
+            $phone = '62' . substr($phone, 1);
+        }
+        $trans = $unit->translations->first();
+        $title = $trans?->title ?? $trans?->property_name ?? 'Properti Kami';
+        $text  = 'Halo Saya ingin informasi lengkap tentang ' . $title . ', Mohon kirimkan detailnya';
+        return 'https://api.whatsapp.com/send/?phone=' . $phone
+            . '&text=' . rawurlencode($text)
+            . '&type=phone_number&app_absent=0';
     }
 
     private function buildDetailUrl(PropertyUnit $unit): string

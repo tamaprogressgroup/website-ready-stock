@@ -163,6 +163,7 @@ class DetailProductController extends BaseFrontController
 
         return [
             'property_id'      => $unit->property_id,
+            'wa_url'           => $this->buildWaUrl($unit),
             'has_discount'     => $diskon > 0,
             'price_display'    => $final,
             'price_original'   => $original,

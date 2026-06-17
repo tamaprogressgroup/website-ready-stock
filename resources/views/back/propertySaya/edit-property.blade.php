@@ -186,6 +186,14 @@
             </div>
 
             <div class="mb-4">
+                <label class="form-label fw-semibold" style="font-size:13px;">No. HP / WhatsApp Agen</label>
+                <p class="text-muted mb-2" style="font-size:12px;">Nomor ini digunakan untuk tombol WhatsApp di halaman properti. Format: 08xxx atau 628xxx.</p>
+                <input type="tel" class="form-control @error('no_hp') is-invalid @enderror" name="no_hp"
+                    value="{{ old('no_hp', $item->no_hp) }}" placeholder="Contoh: 08172856666 atau 628172856666">
+                @error('no_hp')<div class="invalid-feedback">{{ $message }}</div>@enderror
+            </div>
+
+            <div class="mb-4">
                 <label class="form-label fw-semibold" style="font-size:13px;">Deskripsi Properti <span class="text-danger">*</span></label>
                 <textarea class="form-control @error('description') is-invalid @enderror" name="description" rows="5">{{ old('description', $trans?->description) }}</textarea>
                 @error('description')<div class="invalid-feedback">{{ $message }}</div>@enderror

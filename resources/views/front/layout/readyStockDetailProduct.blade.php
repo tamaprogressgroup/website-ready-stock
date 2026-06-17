@@ -692,10 +692,11 @@
 								<div class="mb-4">
 									<input type="email" name="email" class="form-control text-3 py-2" placeholder="Email" style="background-color: #f8f9fa; border: none; border-radius: 8px;">
 								</div>
-								<button type="submit" class="btn w-100 font-weight-bold py-2 text-color-light d-flex align-items-center justify-content-center"
+								<a href="{{ $property['wa_url'] }}" target="_blank"
+									class="btn w-100 font-weight-bold py-2 text-color-light d-flex align-items-center justify-content-center"
 									style="background-color: #61c97d; border-radius: 8px; border: none; font-size: 14px;">
 									<i class="fab fa-whatsapp me-2 text-4"></i> WhatsApp
-								</button>
+								</a>
 							</form>
 						</div>
 					</div>
@@ -712,7 +713,7 @@
 				</div>
 				@foreach ($relatedProperties as $prop)
 				<div class="col-lg-3 col-md-6 mb-4">
-					<div class="card related-card border border-color-grey-1 bg-white h-100">
+					<div class="card related-card border border-color-grey-1 bg-white h-100" style="cursor:pointer;" onclick="window.location='{{ $prop['detail_url'] }}'">
 						<div class="position-relative p-2">
 							<div class="position-absolute top-0 left-0 pt-3 ms-3 z-index-1">
 								@foreach ($prop['badges'] as $badge)
@@ -728,7 +729,7 @@
 						<div class="card-body px-3 py-2">
 							<div class="d-flex justify-content-between align-items-center mb-1">
 								<h4 class="font-weight-bold text-4 mb-0" style="color: #3b5998;">{{ $prop['price'] }}</h4>
-								<a href="{{ $prop['detail_url'] }}">
+								<a href="{{ $prop['detail_url'] }}" onclick="event.stopPropagation()">
 									<i class="fas fa-arrow-right" style="color: #3b5998; font-size: 14px;"></i>
 								</a>
 							</div>
@@ -747,7 +748,7 @@
 								<div>LT <span class="font-weight-bold text-color-dark ms-1">{{ $prop['lt'] }}m²</span></div>
 								<div>LB <span class="font-weight-bold text-color-dark ms-1">{{ $prop['lb'] }}m²</span></div>
 							</div>
-							<a href="{{ $prop['detail_url'] }}"
+							<a href="{{ $prop['wa_url'] }}" target="_blank" onclick="event.stopPropagation()"
 								class="btn w-100 font-weight-bold py-2 text-color-light"
 								style="background-color: #61c97d; border-radius: 8px; border: none; font-size: 13px;">
 								<i class="fab fa-whatsapp me-2 text-4"></i> WhatsApp
