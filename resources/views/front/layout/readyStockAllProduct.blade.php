@@ -4,8 +4,13 @@
 <head>
 	<meta charset="utf-8">
 	<meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1.0, shrink-to-fit=no">
-	<title>Semua Properti - Paradise Ready Stock</title>
+	<title>{{ $pageSeo?->meta_title ?? 'Semua Properti - Paradise Ready Stock' }}</title>
+	<meta name="keywords" content="{{ $pageSeo?->meta_keyword ?? '' }}">
+	<meta name="description" content="{{ $pageSeo?->meta_description ?? '' }}">
 	<meta name="author" content="paradise.co.id">
+	<meta property="og:title" content="{{ $pageSeo?->og_title ?? $pageSeo?->meta_title ?? '' }}">
+	<meta property="og:description" content="{{ $pageSeo?->og_description ?? $pageSeo?->meta_description ?? '' }}">
+	<meta property="og:type" content="website">
 
 	<link id="googleFonts" href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
 	<link rel="stylesheet" href="{{ asset('vendor/bootstrap-icons/bootstrap-icons.css') }}">
@@ -199,7 +204,11 @@
      @include('partials.google_tag_iframe')
 <div class="body">
 
-    @include('front.layout.navbar')
+    @if(request('embed'))
+        @include('front.partials.embed-navbar')
+    @else
+        @include('front.layout.navbar')
+    @endif
     <style>
         .header-logo-light { display: none !important; }
         .header-logo-dark  { display: block !important; }
@@ -211,7 +220,12 @@
         #header .header-body { background-color: #ffffff !important; box-shadow: 0 2px 10px rgba(0,0,0,0.08) !important; }
     </style>
 
-    <div role="main" class="main" style="padding-top: 100px;">
+    @php
+        $embedSuffix = request('embed')
+            ? '?embed=1' . (request('key') ? '&key=' . rawurlencode(request('key')) : '')
+            : '';
+    @endphp
+    <div role="main" class="main" style="padding-top: {{ request('embed') ? '0' : '100px' }};">
     <div class="container py-4 mt-3">
 
         @php
@@ -345,7 +359,6 @@
         {{-- Title & Count --}}
         <div class="row mb-3">
             <div class="col-12">
-                <h2 class="poppins-semibold text-5 mb-1 text-color-dark" style="font-size: 18px;">Properti dijual di Indonesia | Harga Terbaru {{ date('Y') }}</h2>
                 <p class="text-3 text-color-grey poppins-regular" style="font-size: 14px;">
                     @if($totalCount > 0)
                         Menampilkan {{ ($page - 1) * 16 + 1 }}–{{ min($page * 16, $totalCount) }} dari {{ number_format($totalCount) }} properti
@@ -360,7 +373,7 @@
         <div class="row">
             @forelse (array_slice($properties, 0, 8) as $prop)
             <div class="col-lg-3 col-md-6 mb-4">
-                <div class="card border border-color-grey-1 bg-white h-100" style="border-radius: 12px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); cursor:pointer;" onclick="window.location='{{ $prop['detail_url'] }}'">
+                <div class="card border border-color-grey-1 bg-white h-100" style="border-radius: 12px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); cursor:pointer;" onclick="window.location='{{ $prop['detail_url'] }}{{ $embedSuffix }}'">
                     <div class="position-relative p-2">
                         <div class="position-absolute top-0 left-0 pt-3 ms-3 z-index-1">
                             @foreach ($prop['badges'] as $badge)
@@ -372,7 +385,7 @@
                     <div class="card-body px-3 py-2">
                         <div class="d-flex justify-content-between align-items-center mb-1">
                             <h4 class="font-weight-bold text-4 mb-0" style="color: #3b5998;">{{ $prop['price'] }}</h4>
-                            <a href="{{ $prop['detail_url'] }}" onclick="event.stopPropagation()"><i class="fas fa-arrow-right" style="color: #3b5998; font-size: 14px;"></i></a>
+                            <a href="{{ $prop['detail_url'] }}{{ $embedSuffix }}" onclick="event.stopPropagation()"><i class="fas fa-arrow-right" style="color: #3b5998; font-size: 14px;"></i></a>
                         </div>
                         <h5 class="font-weight-semibold text-3 mb-1 mt-2" style="line-height: 1.3; color: #333; height: 38px; overflow: hidden; font-size: 14px;">{{ $prop['title'] }}</h5>
                         <p class="mb-2" style="font-size: 11px; color: #888;">{{ $prop['location'] }}</p>
@@ -382,9 +395,17 @@
                             <div>LT <span class="font-weight-bold text-color-dark ms-1">{{ $prop['lt'] }}m²</span></div>
                             <div>LB <span class="font-weight-bold text-color-dark ms-1">{{ $prop['lb'] }}m²</span></div>
                         </div>
-                        <a href="{{ $prop['wa_url'] }}" target="_blank" onclick="event.stopPropagation()" class="btn w-100 font-weight-bold py-2 text-color-light" style="background-color: #61c97d; border-radius: 8px; border: none; font-size: 13px;">
+                        @if(!request('embed'))
+                        <a href="#"
+                           data-phone="{{ $prop['wa_phone'] ?? '' }}"
+                           data-title="{{ $prop['title'] }}"
+                           data-id="{{ $prop['property_id'] ?? '' }}"
+                           data-url="{{ $prop['detail_url'] ?? '' }}"
+                           onclick="event.preventDefault(); event.stopPropagation(); openWaModal(this.dataset.phone, this.dataset.title, this.dataset.id, this.dataset.url)"
+                           class="btn w-100 font-weight-bold py-2 text-color-light" style="background-color: #61c97d; border-radius: 8px; border: none; font-size: 13px;">
                             <i class="fab fa-whatsapp me-2 text-4"></i> WhatsApp
                         </a>
+                        @endif
                     </div>
                 </div>
             </div>
@@ -417,7 +438,7 @@
         <div class="row">
             @foreach (array_slice($properties, 8) as $prop)
             <div class="col-lg-3 col-md-6 mb-4">
-                <div class="card border border-color-grey-1 bg-white h-100" style="border-radius: 12px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); cursor:pointer;" onclick="window.location='{{ $prop['detail_url'] }}'">
+                <div class="card border border-color-grey-1 bg-white h-100" style="border-radius: 12px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); cursor:pointer;" onclick="window.location='{{ $prop['detail_url'] }}{{ $embedSuffix }}'">
                     <div class="position-relative p-2">
                         <div class="position-absolute top-0 left-0 pt-3 ms-3 z-index-1">
                             @foreach ($prop['badges'] as $badge)
@@ -429,7 +450,7 @@
                     <div class="card-body px-3 py-2">
                         <div class="d-flex justify-content-between align-items-center mb-1">
                             <h4 class="font-weight-bold text-4 mb-0" style="color: #3b5998;">{{ $prop['price'] }}</h4>
-                            <a href="{{ $prop['detail_url'] }}" onclick="event.stopPropagation()"><i class="fas fa-arrow-right" style="color: #3b5998; font-size: 14px;"></i></a>
+                            <a href="{{ $prop['detail_url'] }}{{ $embedSuffix }}" onclick="event.stopPropagation()"><i class="fas fa-arrow-right" style="color: #3b5998; font-size: 14px;"></i></a>
                         </div>
                         <h5 class="font-weight-semibold text-3 mb-1 mt-2" style="line-height: 1.3; color: #333; height: 38px; overflow: hidden; font-size: 14px;">{{ $prop['title'] }}</h5>
                         <p class="mb-2" style="font-size: 11px; color: #888;">{{ $prop['location'] }}</p>
@@ -439,9 +460,17 @@
                             <div>LT <span class="font-weight-bold text-color-dark ms-1">{{ $prop['lt'] }}m²</span></div>
                             <div>LB <span class="font-weight-bold text-color-dark ms-1">{{ $prop['lb'] }}m²</span></div>
                         </div>
-                        <a href="{{ $prop['wa_url'] }}" target="_blank" onclick="event.stopPropagation()" class="btn w-100 font-weight-bold py-2 text-color-light" style="background-color: #61c97d; border-radius: 8px; border: none; font-size: 13px;">
+                        @if(!request('embed'))
+                        <a href="#"
+                           data-phone="{{ $prop['wa_phone'] ?? '' }}"
+                           data-title="{{ $prop['title'] }}"
+                           data-id="{{ $prop['property_id'] ?? '' }}"
+                           data-url="{{ $prop['detail_url'] ?? '' }}"
+                           onclick="event.preventDefault(); event.stopPropagation(); openWaModal(this.dataset.phone, this.dataset.title, this.dataset.id, this.dataset.url)"
+                           class="btn w-100 font-weight-bold py-2 text-color-light" style="background-color: #61c97d; border-radius: 8px; border: none; font-size: 13px;">
                             <i class="fab fa-whatsapp me-2 text-4"></i> WhatsApp
                         </a>
+                        @endif
                     </div>
                 </div>
             </div>
@@ -456,7 +485,7 @@
                 <nav aria-label="Page navigation">
                     <ul class="pagination pagination-sm mb-0 align-items-center">
                         @php
-                            $pageParams = array_filter(request()->only(['sort','price_min','price_max','lt_min','lt_max','lb_min','lb_max','tag','q']), fn($v) => $v !== '' && $v !== null);
+                            $pageParams = array_filter(request()->only(['sort','price_min','price_max','lt_min','lt_max','lb_min','lb_max','tag','q','embed','key']), fn($v) => $v !== '' && $v !== null);
                             $pageUrl = fn(int $p) => url($browseBase . '?' . http_build_query(array_merge($pageParams, ['page' => $p])));
                         @endphp
                         @if ($page > 1)
@@ -489,7 +518,9 @@
     </div>
     </div>
 
-    @include('front.layout.footer')
+    @if(!request('embed'))
+        @include('front.layout.footer')
+    @endif
 
 </div>
 
@@ -916,5 +947,6 @@ function clearAllFilters() {
     }
 })();
 </script>
+@include('front.partials.whatsapp-modal')
 </body>
 </html>

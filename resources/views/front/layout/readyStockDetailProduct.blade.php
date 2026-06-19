@@ -4,9 +4,13 @@
 <head>
 	<meta charset="utf-8">
 	<meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1.0, shrink-to-fit=no">
-	<title>{{ $property['title'] ?? 'Detail Properti' }} - Paradise Ready Stock</title>
-	<meta name="description" content="{{ Str::limit($property['description'] ?? '', 160) }}">
+	<title>{{ $property['meta_title'] ?? ($property['title'] ?? 'Detail Properti') . ' - Paradise Ready Stock' }}</title>
+	<meta name="keywords" content="{{ $property['meta_keyword'] ?? '' }}">
+	<meta name="description" content="{{ $property['meta_description'] ?? Str::limit($property['description'] ?? '', 160) }}">
 	<meta name="author" content="paradise.co.id">
+	<meta property="og:title" content="{{ $property['meta_title'] ?? $property['title'] ?? '' }}">
+	<meta property="og:description" content="{{ $property['meta_description'] ?? Str::limit($property['description'] ?? '', 160) }}">
+	<meta property="og:type" content="website">
 
 	<link id="googleFonts" href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
 	<link rel="stylesheet" href="{{ asset('vendor/bootstrap-icons/bootstrap-icons.css') }}">
@@ -118,19 +122,28 @@
 	@include('partials.google_tag_iframe')
 <div class="body">
 
-	@include('front.layout.navbar')
-	<style>
-		.header-logo-light { display: none !important; }
-		.header-logo-dark  { display: block !important; }
-		.nav-btn-home { background-color: transparent !important; color: #3065A3 !important; padding: 10px 18px !important; }
-		.custom-nav-link,
-		.custom-search-text,
-		.custom-search-icon,
-		.custom-action-icon { color: #333333 !important; }
-		#header .header-body { background-color: #ffffff !important; box-shadow: 0 2px 10px rgba(0,0,0,0.08) !important; }
-	</style>
+	@if(request('embed'))
+		@include('front.partials.embed-navbar')
+	@else
+		@include('front.layout.navbar')
+		<style>
+			.header-logo-light { display: none !important; }
+			.header-logo-dark  { display: block !important; }
+			.nav-btn-home { background-color: transparent !important; color: #3065A3 !important; padding: 10px 18px !important; }
+			.custom-nav-link,
+			.custom-search-text,
+			.custom-search-icon,
+			.custom-action-icon { color: #333333 !important; }
+			#header .header-body { background-color: #ffffff !important; box-shadow: 0 2px 10px rgba(0,0,0,0.08) !important; }
+		</style>
+	@endif
 
-	<div role="main" class="main" style="padding-top: 100px;">
+	@php
+		$embedSuffix = request('embed')
+			? '?embed=1' . (request('key') ? '&key=' . rawurlencode(request('key')) : '')
+			: '';
+	@endphp
+	<div role="main" class="main" style="padding-top: {{ request('embed') ? '0' : '100px' }};">
 		<div class="container py-4 mt-3">
 
 			@php
@@ -668,10 +681,11 @@
 				{{-- ============================================================
 				     SIDEBAR (RIGHT)
 				     ============================================================ --}}
+				@if(!request('embed'))
 				<div class="col-lg-4">
 					<div class="card border border-color-grey-1 promo-card">
 						<div class="card-body p-4">
-							
+
 							<h4 class="poppins-semibold text-center mb-4 text-5" style="color: #1C5FA8;">Dapatkan Promo Sekarang</h4>
 							<form action="{{ route('front.lead.store') }}" method="POST">
 								@csrf
@@ -687,20 +701,23 @@
 									<input type="text" name="fullname" class="form-control text-3 py-2" placeholder="Nama" style="background-color: #f8f9fa; border: none; border-radius: 8px;">
 								</div>
 								<div class="mb-3">
-									<input type="tel" name="phone_number" class="form-control text-3 py-2" placeholder="No. Telepon" style="background-color: #f8f9fa; border: none; border-radius: 8px;">
+									<input name="phone_number" type="number" pattern="[\d\s\+\-\(\)]{6,20}" class="form-control text-3 py-2" placeholder="No. Telepon" style="background-color: #f8f9fa; border: none; border-radius: 8px;">
 								</div>
 								<div class="mb-4">
 									<input type="email" name="email" class="form-control text-3 py-2" placeholder="Email" style="background-color: #f8f9fa; border: none; border-radius: 8px;">
 								</div>
-								<a href="{{ $property['wa_url'] }}" target="_blank"
-									class="btn w-100 font-weight-bold py-2 text-color-light d-flex align-items-center justify-content-center"
-									style="background-color: #61c97d; border-radius: 8px; border: none; font-size: 14px;">
-									<i class="fab fa-whatsapp me-2 text-4"></i> WhatsApp
-								</a>
+								@if(!request('embed'))
+								<button type="submit"
+								   class="btn w-100 font-weight-bold py-2 text-color-light d-flex align-items-center justify-content-center"
+								   style="background-color: #61c97d; border-radius: 8px; border: none; font-size: 14px;">
+								   <i class="fab fa-whatsapp me-2 text-4"></i> WhatsApp
+								</button>
+								@endif
 							</form>
 						</div>
 					</div>
 				</div>
+				@endif
 			</div>{{-- end row --}}
 
 			{{-- ============================================================
@@ -713,7 +730,7 @@
 				</div>
 				@foreach ($relatedProperties as $prop)
 				<div class="col-lg-3 col-md-6 mb-4">
-					<div class="card related-card border border-color-grey-1 bg-white h-100" style="cursor:pointer;" onclick="window.location='{{ $prop['detail_url'] }}'">
+					<div class="card related-card border border-color-grey-1 bg-white h-100" style="cursor:pointer;" onclick="window.location='{{ $prop['detail_url'] }}{{ $embedSuffix }}'">
 						<div class="position-relative p-2">
 							<div class="position-absolute top-0 left-0 pt-3 ms-3 z-index-1">
 								@foreach ($prop['badges'] as $badge)
@@ -729,7 +746,7 @@
 						<div class="card-body px-3 py-2">
 							<div class="d-flex justify-content-between align-items-center mb-1">
 								<h4 class="font-weight-bold text-4 mb-0" style="color: #3b5998;">{{ $prop['price'] }}</h4>
-								<a href="{{ $prop['detail_url'] }}" onclick="event.stopPropagation()">
+								<a href="{{ $prop['detail_url'] }}{{ $embedSuffix }}" onclick="event.stopPropagation()">
 									<i class="fas fa-arrow-right" style="color: #3b5998; font-size: 14px;"></i>
 								</a>
 							</div>
@@ -748,11 +765,18 @@
 								<div>LT <span class="font-weight-bold text-color-dark ms-1">{{ $prop['lt'] }}m²</span></div>
 								<div>LB <span class="font-weight-bold text-color-dark ms-1">{{ $prop['lb'] }}m²</span></div>
 							</div>
-							<a href="{{ $prop['wa_url'] }}" target="_blank" onclick="event.stopPropagation()"
-								class="btn w-100 font-weight-bold py-2 text-color-light"
-								style="background-color: #61c97d; border-radius: 8px; border: none; font-size: 13px;">
-								<i class="fab fa-whatsapp me-2 text-4"></i> WhatsApp
+							@if(!request('embed'))
+							<a href="#"
+							   data-phone="{{ $prop['wa_phone'] ?? '' }}"
+							   data-title="{{ $prop['title'] }}"
+							   data-id="{{ $prop['property_id'] ?? '' }}"
+							   data-url="{{ $prop['detail_url'] ?? '' }}"
+							   onclick="event.preventDefault(); event.stopPropagation(); openWaModal(this.dataset.phone, this.dataset.title, this.dataset.id, this.dataset.url)"
+							   class="btn w-100 font-weight-bold py-2 text-color-light"
+							   style="background-color: #61c97d; border-radius: 8px; border: none; font-size: 13px;">
+							   <i class="fab fa-whatsapp me-2 text-4"></i> WhatsApp
 							</a>
+							@endif
 						</div>
 					</div>
 				</div>
@@ -763,7 +787,9 @@
 		</div>
 	</div>
 
-	@include('front.layout.footer')
+	@if(!request('embed'))
+		@include('front.layout.footer')
+	@endif
 
 </div>
 @include('partials.hubspot')
@@ -900,5 +926,6 @@
 })(jQuery);
 </script>
 
+@include('front.partials.whatsapp-modal')
 </body>
 </html>

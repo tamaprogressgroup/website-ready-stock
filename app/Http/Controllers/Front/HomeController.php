@@ -4,10 +4,13 @@ namespace App\Http\Controllers\Front;
 
 use App\Models\Banner;
 use App\Models\Kota;
+use App\Models\PageSeo;
 use App\Models\PropertyCondition;
 use App\Models\PropertyType;
 use App\Models\PropertyUnit;
 use App\Models\Township;
+use App\Redis\GetRedis;
+use App\Services\EmbedKeyService;
 use Illuminate\Support\Str;
 use Illuminate\View\View;
 
@@ -124,9 +127,17 @@ class HomeController extends BaseFrontController
             ->map(fn(PropertyUnit $u) => $this->formatCard($u))->toArray()
         );
 
+        $pageSeoArr = GetRedis::getRedisSimple('page_seo:home');
+        $pageSeo    = $pageSeoArr
+            ? (object) $pageSeoArr
+            : PageSeo::where('page_key', 'home')->first();
+
+        $keyData = EmbedKeyService::resolve();
+
         return view('front.layout.readyStock', compact(
             'bannerTop', 'propertyTypes', 'propertyConditions',
-            'kotasWithProperties', 'townships', 'recommendations', 'newProperties'
+            'kotasWithProperties', 'townships', 'recommendations', 'newProperties',
+            'keyData', 'pageSeo'
         ));
     }
 }

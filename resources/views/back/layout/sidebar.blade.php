@@ -68,6 +68,12 @@
                     <span class="font-weight-semibold" style="font-size: 14px;">Manajemen User</span>
                 </a>
             </li>
+            <li class="mb-1">
+                <a href="{{ route('back.seo-pages.index') }}" class="text-decoration-none d-flex align-items-center p-3 rounded-lg {{ request()->routeIs('back.seo-pages.*') ? 'bg-primary text-white shadow-sm' : 'text-secondary hover-bg-light' }}" style="transition: all 0.3s ease; border-radius: 8px;">
+                    <i class="fas fa-search me-3 {{ request()->routeIs('back.seo-pages.*') ? 'text-white' : 'text-primary' }}" style="font-size: 1rem; width: 20px; text-align: center;"></i>
+                    <span class="font-weight-semibold" style="font-size: 14px;">SEO Halaman</span>
+                </a>
+            </li>
         </ul>
     </div>
 

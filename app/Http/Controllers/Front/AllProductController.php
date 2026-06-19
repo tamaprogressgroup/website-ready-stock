@@ -5,10 +5,14 @@ namespace App\Http\Controllers\Front;
 use App\Models\Banner;
 use App\Models\Kota;
 use App\Models\LocationArea;
+use App\Models\PageSeo;
 use App\Models\PropertyCondition;
 use App\Models\PropertyType;
 use App\Models\PropertyUnit;
 use App\Models\Township;
+use App\Redis\GetRedis;
+use App\Services\EmbedKeyService;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 use Illuminate\View\View;
@@ -18,8 +22,11 @@ class AllProductController extends BaseFrontController
     private const PER_PAGE = 16;
 
     /** GET /all-products — no slug segments */
-    public function index(Request $request): View
+    public function index(Request $request): View|RedirectResponse
     {
+        if (request('embed') && !EmbedKeyService::resolve()) {
+            return redirect()->route('front.home');
+        }
         return $this->buildProductView($request);
     }
 
@@ -30,7 +37,10 @@ class AllProductController extends BaseFrontController
         ?string $type     = null,
         ?string $kota     = null,
         ?string $township = null,
-    ): View {
+    ): View|RedirectResponse {
+        if (request('embed') && !EmbedKeyService::resolve()) {
+            return redirect()->route('front.home');
+        }
         $lang = $this->lang;
 
         // Resolve condition slug → model
@@ -228,10 +238,17 @@ class AllProductController extends BaseFrontController
             })
             ->toArray();
 
+        $pageSeoArr = GetRedis::getRedisSimple('page_seo:all_products');
+        $pageSeo    = $pageSeoArr
+            ? (object) $pageSeoArr
+            : PageSeo::where('page_key', 'all_products')->first();
+
+        $keyData = EmbedKeyService::resolve();
+
         return view('front.layout.readyStockAllProduct', compact(
             'propertyTypes', 'propertyConditions', 'banner',
             'properties', 'totalCount', 'page', 'totalPages', 'sort',
-            'urlSlugs', 'slugNames', 'browseBase', 'mapMarkers'
+            'urlSlugs', 'slugNames', 'browseBase', 'mapMarkers', 'keyData', 'pageSeo'
         ));
     }
 

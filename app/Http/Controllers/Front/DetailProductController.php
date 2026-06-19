@@ -4,11 +4,13 @@ namespace App\Http\Controllers\Front;
 
 use App\Models\PropertyMedia;
 use App\Models\PropertyUnit;
+use App\Services\EmbedKeyService;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\View\View;
 
 class DetailProductController extends BaseFrontController
 {
-    public function showBySlug(string $condition, string $type, string $kota, string $township, string $slug): View
+    public function showBySlug(string $condition, string $type, string $kota, string $township, string $slug): View|RedirectResponse
     {
         $unit = PropertyUnit::where('slug', $slug)->first();
         if (!$unit) {
@@ -17,8 +19,12 @@ class DetailProductController extends BaseFrontController
         return $this->index($unit->property_id);
     }
 
-    public function index(int $id): View
+    public function index(int $id): View|RedirectResponse
     {
+        if (request('embed') && !EmbedKeyService::resolve()) {
+            return redirect()->route('front.home');
+        }
+
         $property = $this->resolveCache("property_detail:{$id}", $this->lang, function() use ($id) {
             $unit = PropertyUnit::with([
                 'translations'                 => fn($q) => $q->where('locale', $this->lang),
@@ -65,7 +71,9 @@ class DetailProductController extends BaseFrontController
             ->toArray()
         );
 
-        return view('front.layout.readyStockDetailProduct', compact('property', 'relatedProperties'));
+        $keyData = EmbedKeyService::resolve();
+
+        return view('front.layout.readyStockDetailProduct', compact('property', 'relatedProperties', 'keyData'));
     }
 
     private function buildDetailArray(PropertyUnit $unit): array
@@ -163,7 +171,11 @@ class DetailProductController extends BaseFrontController
 
         return [
             'property_id'      => $unit->property_id,
+            'meta_title'       => $trans?->meta_title       ?? null,
+            'meta_keyword'     => $trans?->meta_keyword     ?? null,
+            'meta_description' => $trans?->meta_descriotion ?? null,
             'wa_url'           => $this->buildWaUrl($unit),
+            'wa_phone'         => $this->buildWaPhone($unit),
             'has_discount'     => $diskon > 0,
             'price_display'    => $final,
             'price_original'   => $original,

@@ -11,6 +11,7 @@ use App\Http\Controllers\Back\Master\PropertyTypeController;
 use App\Http\Controllers\Back\Master\TownshipController;
 use App\Http\Controllers\Back\PasangProperty\PasangPropertyController;
 use App\Http\Controllers\Back\Property\PropertyController;
+use App\Http\Controllers\Back\PageSeoController;
 use App\Http\Controllers\Front\AllProductController;
 use App\Http\Controllers\Front\DetailProductController;
 use App\Http\Controllers\Front\HomeController;
@@ -61,6 +62,10 @@ Route::middleware('back.auth')->group(function () {
     });
 
     Route::resource('admin-user', AdminUserController::class)->except(['show']);
+
+    Route::get('/seo-pages',               [PageSeoController::class, 'index'])->name('back.seo-pages.index');
+    Route::get('/seo-pages/{pageKey}/edit',[PageSeoController::class, 'edit'])->name('back.seo-pages.edit');
+    Route::put('/seo-pages/{pageKey}',     [PageSeoController::class, 'update'])->name('back.seo-pages.update');
 });
 
 // ── Redis / Data API ───────────────────────────────────────────────────────

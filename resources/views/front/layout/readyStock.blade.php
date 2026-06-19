@@ -7,12 +7,15 @@
 	<meta charset="utf-8">
 	<meta name="viewport" content="width=device-width, initial-scale=1">
 
-	<title>Paradise Ready Stock</title>
+	<title>{{ $pageSeo?->meta_title ?? 'Paradise Ready Stock' }}</title>
 
-	<meta name="title" content="" />
-	<meta name="keywords" content="" />
-	<meta name="description" content="">
+	<meta name="title" content="{{ $pageSeo?->meta_title ?? '' }}" />
+	<meta name="keywords" content="{{ $pageSeo?->meta_keyword ?? '' }}" />
+	<meta name="description" content="{{ $pageSeo?->meta_description ?? '' }}">
 	<meta name="author" content="paradise.co.id">
+	<meta property="og:title" content="{{ $pageSeo?->og_title ?? $pageSeo?->meta_title ?? '' }}">
+	<meta property="og:description" content="{{ $pageSeo?->og_description ?? $pageSeo?->meta_description ?? '' }}">
+	<meta property="og:type" content="website">
 
 
 	<!-- Favicon -->

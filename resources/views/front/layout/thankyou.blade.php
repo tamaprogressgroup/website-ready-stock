@@ -102,8 +102,37 @@
             justify-content: center;
             flex-wrap: wrap;
         }
+        .ty-countdown-num {
+            font-size: 56px;
+            font-weight: 800;
+            color: #43CB83;
+            line-height: 1;
+            margin: 6px 0;
+        }
+        .ty-countdown-label {
+            font-size: 13px;
+            color: #888;
+            margin-bottom: 20px;
+        }
+        .ty-wa-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: #43CB83;
+            color: #fff;
+            font-weight: 700;
+            font-size: 15px;
+            border: none;
+            border-radius: 25px;
+            padding: 14px 28px;
+            text-decoration: none;
+            margin-bottom: 16px;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        .ty-wa-btn:hover { background: #33b870; color: #fff; }
     </style>
- 
+
 	@include('partials.hubspot')
 </head>
 <body>
@@ -114,6 +143,32 @@
     <div class="ty-card">
         <h1>Terima kasih!</h1>
         <p class="ty-subtitle">Kami telah menerima pesan Anda dan kami akan segera menghubungi Anda.</p>
+
+        @if(!empty($waUrl))
+        {{-- Countdown + WA redirect --}}
+        <div style="margin-bottom:24px;">
+            <p style="font-size:14px;color:#555;margin-bottom:4px;">Anda akan diarahkan ke WhatsApp dalam</p>
+            <div class="ty-countdown-num" id="ty-count">5</div>
+            <p class="ty-countdown-label">detik</p>
+            <a href="{{ $waUrl }}" class="ty-wa-btn" id="ty-wa-link">
+                <i class="fab fa-whatsapp" style="font-size:20px;"></i> Buka WhatsApp Sekarang
+            </a>
+        </div>
+        <script>
+        (function(){
+            var n = 5;
+            var el = document.getElementById('ty-count');
+            var timer = setInterval(function(){
+                n--;
+                if(el) el.textContent = n;
+                if(n <= 0){
+                    clearInterval(timer);
+                    window.location.href = '{{ addslashes($waUrl) }}';
+                }
+            }, 1000);
+        })();
+        </script>
+        @endif
 
         <img src="{{ $image }}" alt="{{ $title ?? 'Property' }}" class="ty-image">
 

@@ -29,6 +29,10 @@ html.sticky-header-active #header .header-body {
 }
 </style>
 
+@php
+    $navKeySuffix = request('key') ? '?key=' . rawurlencode(request('key')) : '';
+@endphp
+
 {{-- ===== HEADER ===== --}}
 <header id="header" class="header-transparent header-effect-shrink"
     data-plugin-options="{'stickyEnabled': true, 'stickyEffect': 'shrink', 'stickyEnableOnBoxed': true, 'stickyEnableOnMobile': false, 'stickyChangeLogo': true, 'stickyStartAt': 30, 'stickyHeaderContainerHeight': 70}">
@@ -40,7 +44,7 @@ html.sticky-header-active #header .header-body {
                 <div class="header-column">
                     <div class="header-row">
                         <div class="header-logo">
-                            <a href="{{ url('/') }}" class="text-decoration-none">
+                            <a href="{{ url('/') }}{{ $navKeySuffix }}" class="text-decoration-none">
                                 <h2 class="font-weight-bold text-6 mb-0 d-flex align-items-center">
                                     <img src="{{ asset('stock-image/progress-logo.png') }}"         alt="Progress Group" width="180px" class="header-logo-light">
                                     <img src="{{ asset('stock-image/progress-logo-colored.png') }}" alt="Progress Group" width="180px" class="header-logo-dark">
@@ -61,13 +65,13 @@ html.sticky-header-active #header .header-body {
                                         {{-- Home --}}
                                         <li style="display:flex;align-items:center;">
                                             <a class="nav-link font-weight-bold nav-btn-home poppins-semibold"
-                                               href="{{ url('/') }}">Home</a>
+                                               href="{{ url('/') }}{{ $navKeySuffix }}">Home</a>
                                         </li>
 
                                         {{-- Rekomendasi Properti --}}
                                         <li style="display:flex;align-items:center;">
                                             <a class="nav-link font-weight-semibold custom-nav-link poppins-semibold"
-                                               href="{{ url('/') }}#rekomendasi-properti"
+                                               href="{{ url('/') }}{{ $navKeySuffix }}#rekomendasi-properti"
                                                style="padding: 10px 18px !important; margin: 0 3px;">
                                                Rekomendasi Properti
                                             </a>
@@ -76,7 +80,7 @@ html.sticky-header-active #header .header-body {
                                         {{-- Properti Baru --}}
                                         <li style="display:flex;align-items:center;">
                                             <a class="nav-link font-weight-semibold custom-nav-link poppins-semibold"
-                                               href="{{ url('/') }}#properti-baru"
+                                               href="{{ url('/') }}{{ $navKeySuffix }}#properti-baru"
                                                style="padding: 10px 18px !important; margin: 0 3px;">
                                                Properti Baru
                                             </a>
@@ -85,7 +89,7 @@ html.sticky-header-active #header .header-body {
                                         {{-- Project --}}
                                         <li style="display:flex;align-items:center;">
                                             <a class="nav-link font-weight-semibold custom-nav-link poppins-semibold"
-                                               href="{{ url('/') }}#properti-by-project"
+                                               href="{{ url('/') }}{{ $navKeySuffix }}#properti-by-project"
                                                style="padding: 10px 18px !important; margin: 0 14px 0 3px;">
                                                Project
                                             </a>

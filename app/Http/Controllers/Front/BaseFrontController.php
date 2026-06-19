@@ -81,6 +81,7 @@ abstract class BaseFrontController extends Controller
             'property_id' => $unit->property_id,
             'detail_url'  => $this->buildDetailUrl($unit),
             'wa_url'      => $this->buildWaUrl($unit),
+            'wa_phone'    => $this->buildWaPhone($unit),
             'badges'      => $badges,
             'image'       => $image,
             'price'       => $this->formatPrice($price, $diskon),
@@ -95,13 +96,20 @@ abstract class BaseFrontController extends Controller
         ];
     }
 
-    protected function buildWaUrl(PropertyUnit $unit): string
+    protected function buildWaPhone(PropertyUnit $unit): string
     {
         $phone = preg_replace('/\D/', '', $unit->no_hp ?? '');
-        if (!$phone) return '#';
+        if (!$phone) return '';
         if (str_starts_with($phone, '0')) {
             $phone = '62' . substr($phone, 1);
         }
+        return $phone;
+    }
+
+    protected function buildWaUrl(PropertyUnit $unit): string
+    {
+        $phone = $this->buildWaPhone($unit);
+        if (!$phone) return '#';
         $trans = $unit->translations->first();
         $title = $trans?->title ?? $trans?->property_name ?? 'Properti Kami';
         $text  = 'Halo Saya ingin informasi lengkap tentang ' . $title . ', Mohon kirimkan detailnya';

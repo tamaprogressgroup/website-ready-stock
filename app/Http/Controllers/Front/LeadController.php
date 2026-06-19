@@ -83,20 +83,25 @@ class LeadController extends BaseFrontController
         string $township,
         string $slug
     ): View {
-        $unit = PropertyUnit::where('slug', $slug)->first();
-        return $this->renderThankyou($unit);
+        $raw   = request()->get('wa_url', '');
+        $waUrl = str_starts_with($raw, 'https://api.whatsapp.com/') ? $raw : '';
+        $unit  = PropertyUnit::where('slug', $slug)->first();
+        return $this->renderThankyou($unit, $waUrl);
     }
 
-    /** Fallback route: /thankyou?property_id=X */
+    /** Fallback route: /thankyou?property_id=X&wa_url=... */
     public function thankyou(Request $request): View
     {
+        $raw   = $request->get('wa_url', '');
+        $waUrl = str_starts_with($raw, 'https://api.whatsapp.com/') ? $raw : '';
+
         $unit = $request->filled('property_id')
             ? PropertyUnit::find((int) $request->property_id)
             : null;
-        return $this->renderThankyou($unit);
+        return $this->renderThankyou($unit, $waUrl);
     }
 
-    private function renderThankyou(?PropertyUnit $unit): View
+    private function renderThankyou(?PropertyUnit $unit, string $waUrl = ''): View
     {
         if ($unit) {
             $unit->load([
@@ -112,7 +117,7 @@ class LeadController extends BaseFrontController
         $title      = $unit?->translations->first()?->title
                    ?? $unit?->translations->first()?->property_name;
 
-        return view('front.layout.thankyou', compact('image', 'title'));
+        return view('front.layout.thankyou', compact('image', 'title', 'waUrl'));
     }
 
     // =========================================================================
@@ -171,7 +176,7 @@ class LeadController extends BaseFrontController
         $firstname = $nameParts[0];
         $lastname  = count($nameParts) > 1 ? implode(' ', array_slice($nameParts, 1)) : '';
 
-        $salutation  = $this->mapSalutation($params['salutation']);
+        $salutation  = $this->mapSalutation($params['salutation']); // Pak / Ibu
         $nameForMail = trim("$salutation $firstname");
         $townData    = $this->mapTownship($params['Township']);
         $timestamp   = strtotime('today midnight') * 1000;
@@ -199,7 +204,7 @@ class LeadController extends BaseFrontController
             'phone'                                  => $phone,
             'email'                                  => $email,
             'mobilephone'                            => $phone,
-            'wa_phone_number'                        => ltrim($phone, '+'),
+            'wa_phone_number'                        => str_replace('+', '', $phone),
             'salutation'                             => $salutation,
             'nomor_hp'                               => $phone,
             'name_for_mail'                          => $nameForMail,
@@ -214,6 +219,8 @@ class LeadController extends BaseFrontController
             'project_category'                       => 'residential',
             'hs_context'                             => $hsContext,
         ];
+
+        Log::info('HubSpot: postData fields', array_diff_key($postData, ['hs_context' => '']));
 
         $contactUpdate = $postData;
         unset($contactUpdate['hs_context']);
@@ -385,14 +392,16 @@ class LeadController extends BaseFrontController
 
     private function submitForm(string $url, array $data): array
     {
-        $response = Http::withToken(config('services.hubspot.token'))
-            ->timeout(10)
+        // Forms v2 API does not use Bearer token auth — sending it causes 204 without contact creation
+        $response = Http::timeout(10)
             ->asForm()
             ->post($url, $data);
 
-        if ($response->failed()) {
-            Log::error('HubSpot: submitForm failed', ['status' => $response->status(), 'body' => $response->body()]);
-        }
+        $level = $response->failed() ? 'error' : 'info';
+        Log::$level('HubSpot: submitForm response', [
+            'status' => $response->status(),
+            'body'   => $response->body(),
+        ]);
 
         return $response->json() ?? [];
     }
@@ -405,9 +414,12 @@ class LeadController extends BaseFrontController
                 'properties' => $data,
             ]);
 
-        if ($response->failed()) {
-            Log::error('HubSpot: patchContact failed', ['contact_id' => $contactId, 'status' => $response->status(), 'body' => $response->body()]);
-        }
+        $level = $response->failed() ? 'error' : 'info';
+        Log::$level('HubSpot: patchContact response', [
+            'contact_id' => $contactId,
+            'status'     => $response->status(),
+            'body'       => $response->body(),
+        ]);
 
         return $response->json() ?? [];
     }
@@ -418,9 +430,11 @@ class LeadController extends BaseFrontController
             ->timeout(10)
             ->post($url, $data);
 
-        if ($response->failed()) {
-            Log::error('HubSpot: submitNote failed', ['status' => $response->status(), 'body' => $response->body()]);
-        }
+        $level = $response->failed() ? 'error' : 'info';
+        Log::$level('HubSpot: submitNote response', [
+            'status' => $response->status(),
+            'body'   => $response->body(),
+        ]);
 
         return $response->json() ?? [];
     }
@@ -433,9 +447,11 @@ class LeadController extends BaseFrontController
                 'properties' => $properties,
             ]);
 
-        if ($response->failed()) {
-            Log::error('HubSpot: createContact failed', ['status' => $response->status(), 'body' => $response->body()]);
-        }
+        $level = $response->failed() ? 'error' : 'info';
+        Log::$level('HubSpot: createContact response', [
+            'status' => $response->status(),
+            'body'   => $response->body(),
+        ]);
 
         return $response->json() ?? [];
     }
@@ -452,9 +468,12 @@ class LeadController extends BaseFrontController
             return $this->createContact($properties);
         }
 
-        if ($response->failed()) {
-            Log::error('HubSpot: upsertContact failed', ['email' => $email, 'status' => $response->status(), 'body' => $response->body()]);
-        }
+        $level = $response->failed() ? 'error' : 'info';
+        Log::$level('HubSpot: upsertContact response', [
+            'email'  => $email,
+            'status' => $response->status(),
+            'body'   => $response->body(),
+        ]);
 
         return $response->json() ?? [];
     }

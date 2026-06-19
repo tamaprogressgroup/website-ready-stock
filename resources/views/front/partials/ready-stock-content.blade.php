@@ -264,3 +264,5 @@
     @endif
 
 </div>
+
+@include('front.partials.whatsapp-modal')
