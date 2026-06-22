@@ -18,6 +18,12 @@
                     <span class="font-weight-semibold" style="font-size: 14px;">Sales Inquiry</span>
                 </a>
             </li>
+            <li class="mb-1">
+                <a href="{{ route('customer.short-links.index') }}" class="text-decoration-none d-flex align-items-center p-3 rounded-lg {{ request()->routeIs('customer.short-links*') ? 'bg-primary text-white shadow-sm' : 'text-secondary hover-bg-light' }}" style="transition: all 0.3s ease; border-radius: 8px;">
+                    <i class="fas fa-link me-3 {{ request()->routeIs('customer.short-links*') ? 'text-white' : 'text-primary' }}" style="font-size: 1.1rem; width: 20px; text-align: center;"></i>
+                    <span class="font-weight-semibold" style="font-size: 14px;">Short Link</span>
+                </a>
+            </li>
         </ul>
     </div>
 

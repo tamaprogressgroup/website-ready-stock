@@ -21,10 +21,6 @@ class DetailProductController extends BaseFrontController
 
     public function index(int $id): View|RedirectResponse
     {
-        if (request('embed') && !EmbedKeyService::resolve()) {
-            return redirect()->route('front.home');
-        }
-
         $property = $this->resolveCache("property_detail:{$id}", $this->lang, function() use ($id) {
             $unit = PropertyUnit::with([
                 'translations'                 => fn($q) => $q->where('locale', $this->lang),

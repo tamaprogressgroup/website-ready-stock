@@ -14,6 +14,9 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->alias([
             'back.auth' => \App\Http\Middleware\BackAuth::class,
         ]);
+        $middleware->validateCsrfTokens(except: [
+            'api/embed/*',
+        ]);
     })
     ->withExceptions(function (Exceptions $exceptions) {
         //

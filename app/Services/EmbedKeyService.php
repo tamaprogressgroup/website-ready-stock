@@ -6,14 +6,46 @@ class EmbedKeyService
 {
     private const SECRET = 'PdC0nn3ct2026Sec3tKey32BytesXz1!';
 
+    private const SESSION_KEY = '_embed_key';
+
     /**
-     * Read request('key'), decrypt, validate, return data array or null.
+     * Resolve key data from request or session.
+     *
+     * Priority:
+     *   1. ?key= in URL AND valid  → store in session, return data
+     *   2. ?key= in URL AND invalid → return null (CMS defaults, session ignored)
+     *   3. No ?key= in URL, non-embed → return session data if available
+     *   4. Embed mode always passes key in URL, so no session fallback needed
      */
     public static function resolve(): ?array
     {
         $raw = request('key');
-        if (!$raw) return null;
-        return static::decrypt($raw);
+
+        if ($raw) {
+            $data = static::decrypt($raw);
+            if ($data) {
+                // Valid key — persist to session for subsequent page navigations
+                session([static::SESSION_KEY => $data]);
+                return $data;
+            }
+            // Invalid key in URL — page loads normally with CMS defaults
+            return null;
+        }
+
+        // No key in URL: use session (only in non-embed mode)
+        if (request('embed') !== '1') {
+            return session(static::SESSION_KEY);
+        }
+
+        return null;
+    }
+
+    /**
+     * Clear stored key from session (e.g., on logout or explicit reset).
+     */
+    public static function forget(): void
+    {
+        session()->forget(static::SESSION_KEY);
     }
 
     /**

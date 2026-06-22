@@ -204,7 +204,7 @@
      @include('partials.google_tag_iframe')
 <div class="body">
 
-    @if(request('embed'))
+    @if(request('embed') === '1')
         @include('front.partials.embed-navbar')
     @else
         @include('front.layout.navbar')
@@ -221,11 +221,11 @@
     </style>
 
     @php
-        $embedSuffix = request('embed')
+        $embedSuffix = request('embed') === '1'
             ? '?embed=1' . (request('key') ? '&key=' . rawurlencode(request('key')) : '')
             : '';
     @endphp
-    <div role="main" class="main" style="padding-top: {{ request('embed') ? '0' : '100px' }};">
+    <div role="main" class="main" style="padding-top: {{ request('embed') === '1' ? '0' : '100px' }};">
     <div class="container py-4 mt-3">
 
         @php
@@ -395,16 +395,29 @@
                             <div>LT <span class="font-weight-bold text-color-dark ms-1">{{ $prop['lt'] }}m²</span></div>
                             <div>LB <span class="font-weight-bold text-color-dark ms-1">{{ $prop['lb'] }}m²</span></div>
                         </div>
-                        @if(!request('embed'))
-                        <a href="#"
-                           data-phone="{{ $prop['wa_phone'] ?? '' }}"
-                           data-title="{{ $prop['title'] }}"
-                           data-id="{{ $prop['property_id'] ?? '' }}"
-                           data-url="{{ $prop['detail_url'] ?? '' }}"
-                           onclick="event.preventDefault(); event.stopPropagation(); openWaModal(this.dataset.phone, this.dataset.title, this.dataset.id, this.dataset.url)"
-                           class="btn w-100 font-weight-bold py-2 text-color-light" style="background-color: #61c97d; border-radius: 8px; border: none; font-size: 13px;">
-                            <i class="fab fa-whatsapp me-2 text-4"></i> WhatsApp
-                        </a>
+                        @php
+                            $keyWaPhone = (request('embed') !== '1' && isset($keyData) && is_array($keyData) && !empty($keyData['no_hp']))
+                                ? \App\Services\EmbedKeyService::normalizePhone($keyData['no_hp'])
+                                : '';
+                            $keyWaText  = rawurlencode('Halo, Saya ingin informasi lengkap tentang ' . ($prop['title'] ?? '') . ', Mohon kirimkan detailnya.');
+                        @endphp
+                        @if($keyWaPhone)
+                            <a href="https://api.whatsapp.com/send/?phone={{ $keyWaPhone }}&text={{ $keyWaText }}&type=phone_number&app_absent=0"
+                               target="_blank"
+                               onclick="event.stopPropagation()"
+                               class="btn w-100 font-weight-bold py-2 text-color-light" style="background-color: #61c97d; border-radius: 8px; border: none; font-size: 13px;">
+                                <i class="fab fa-whatsapp me-2 text-4"></i> WhatsApp
+                            </a>
+                        @elseif(request('embed') !== '1')
+                            <a href="#"
+                               data-phone="{{ $prop['wa_phone'] ?? '' }}"
+                               data-title="{{ $prop['title'] }}"
+                               data-id="{{ $prop['property_id'] ?? '' }}"
+                               data-url="{{ $prop['detail_url'] ?? '' }}"
+                               onclick="event.preventDefault(); event.stopPropagation(); openWaModal(this.dataset.phone, this.dataset.title, this.dataset.id, this.dataset.url)"
+                               class="btn w-100 font-weight-bold py-2 text-color-light" style="background-color: #61c97d; border-radius: 8px; border: none; font-size: 13px;">
+                                <i class="fab fa-whatsapp me-2 text-4"></i> WhatsApp
+                            </a>
                         @endif
                     </div>
                 </div>
@@ -460,16 +473,29 @@
                             <div>LT <span class="font-weight-bold text-color-dark ms-1">{{ $prop['lt'] }}m²</span></div>
                             <div>LB <span class="font-weight-bold text-color-dark ms-1">{{ $prop['lb'] }}m²</span></div>
                         </div>
-                        @if(!request('embed'))
-                        <a href="#"
-                           data-phone="{{ $prop['wa_phone'] ?? '' }}"
-                           data-title="{{ $prop['title'] }}"
-                           data-id="{{ $prop['property_id'] ?? '' }}"
-                           data-url="{{ $prop['detail_url'] ?? '' }}"
-                           onclick="event.preventDefault(); event.stopPropagation(); openWaModal(this.dataset.phone, this.dataset.title, this.dataset.id, this.dataset.url)"
-                           class="btn w-100 font-weight-bold py-2 text-color-light" style="background-color: #61c97d; border-radius: 8px; border: none; font-size: 13px;">
-                            <i class="fab fa-whatsapp me-2 text-4"></i> WhatsApp
-                        </a>
+                        @php
+                            $keyWaPhone = (request('embed') !== '1' && isset($keyData) && is_array($keyData) && !empty($keyData['no_hp']))
+                                ? \App\Services\EmbedKeyService::normalizePhone($keyData['no_hp'])
+                                : '';
+                            $keyWaText  = rawurlencode('Halo, Saya ingin informasi lengkap tentang ' . ($prop['title'] ?? '') . ', Mohon kirimkan detailnya.');
+                        @endphp
+                        @if($keyWaPhone)
+                            <a href="https://api.whatsapp.com/send/?phone={{ $keyWaPhone }}&text={{ $keyWaText }}&type=phone_number&app_absent=0"
+                               target="_blank"
+                               onclick="event.stopPropagation()"
+                               class="btn w-100 font-weight-bold py-2 text-color-light" style="background-color: #61c97d; border-radius: 8px; border: none; font-size: 13px;">
+                                <i class="fab fa-whatsapp me-2 text-4"></i> WhatsApp
+                            </a>
+                        @elseif(request('embed') !== '1')
+                            <a href="#"
+                               data-phone="{{ $prop['wa_phone'] ?? '' }}"
+                               data-title="{{ $prop['title'] }}"
+                               data-id="{{ $prop['property_id'] ?? '' }}"
+                               data-url="{{ $prop['detail_url'] ?? '' }}"
+                               onclick="event.preventDefault(); event.stopPropagation(); openWaModal(this.dataset.phone, this.dataset.title, this.dataset.id, this.dataset.url)"
+                               class="btn w-100 font-weight-bold py-2 text-color-light" style="background-color: #61c97d; border-radius: 8px; border: none; font-size: 13px;">
+                                <i class="fab fa-whatsapp me-2 text-4"></i> WhatsApp
+                            </a>
                         @endif
                     </div>
                 </div>
@@ -518,7 +544,7 @@
     </div>
     </div>
 
-    @if(!request('embed'))
+    @if(request('embed') !== '1')
         @include('front.layout.footer')
     @endif
 

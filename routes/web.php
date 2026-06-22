@@ -33,6 +33,8 @@ Route::get('/detail-product/{id}', [DetailProductController::class, 'index'])->n
 Route::post('/lead',       [LeadController::class,  'store'])->name('front.lead.store');
 Route::get('/thankyou',    [LeadController::class,  'thankyou'])->name('front.thankyou');
 
+Route::get('/s/{code}', [\App\Http\Controllers\Front\ShortLinkController::class, 'redirect'])->name('short.redirect');
+
 // ── Back — Protected ───────────────────────────────────────────────────────
 Route::middleware('back.auth')->group(function () {
     Route::get('/customer', fn() => view('back/layout/dashboard'))->name('customer.dashboard');
@@ -66,7 +68,14 @@ Route::middleware('back.auth')->group(function () {
     Route::get('/seo-pages',               [PageSeoController::class, 'index'])->name('back.seo-pages.index');
     Route::get('/seo-pages/{pageKey}/edit',[PageSeoController::class, 'edit'])->name('back.seo-pages.edit');
     Route::put('/seo-pages/{pageKey}',     [PageSeoController::class, 'update'])->name('back.seo-pages.update');
+
+    Route::get('/customer/short-links',           [\App\Http\Controllers\Back\ShortLinkController::class, 'index'])->name('customer.short-links.index');
+    Route::post('/customer/short-links',          [\App\Http\Controllers\Back\ShortLinkController::class, 'store'])->name('customer.short-links.store');
+    Route::delete('/customer/short-links/{id}',   [\App\Http\Controllers\Back\ShortLinkController::class, 'destroy'])->name('customer.short-links.destroy');
 });
+
+// ── Embed API (CSRF-exempt via bootstrap/app.php) ─────────────────────────
+Route::post('/api/embed/short-link', [\App\Http\Controllers\Api\EmbedShortLinkController::class, 'resolve'])->name('api.embed.short-link');
 
 // ── Redis / Data API ───────────────────────────────────────────────────────
 Route::prefix('api/data')->group(function () {

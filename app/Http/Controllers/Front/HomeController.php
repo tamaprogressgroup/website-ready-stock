@@ -123,6 +123,7 @@ class HomeController extends BaseFrontController
                 'tags'                      => fn($q) => $q->where('is_label', 1),
             ])
             ->where('is_active', 1)->where('status_id', 1)
+            ->whereHas('tags', fn($q) => $q->where('name', 'Properti Baru'))
             ->latest('created_datetime')->limit(8)->get()
             ->map(fn(PropertyUnit $u) => $this->formatCard($u))->toArray()
         );

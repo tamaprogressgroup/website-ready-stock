@@ -12,7 +12,6 @@ use App\Models\PropertyUnit;
 use App\Models\Township;
 use App\Redis\GetRedis;
 use App\Services\EmbedKeyService;
-use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 use Illuminate\View\View;
@@ -22,11 +21,8 @@ class AllProductController extends BaseFrontController
     private const PER_PAGE = 16;
 
     /** GET /all-products — no slug segments */
-    public function index(Request $request): View|RedirectResponse
+    public function index(Request $request): View
     {
-        if (request('embed') && !EmbedKeyService::resolve()) {
-            return redirect()->route('front.home');
-        }
         return $this->buildProductView($request);
     }
 
@@ -37,10 +33,7 @@ class AllProductController extends BaseFrontController
         ?string $type     = null,
         ?string $kota     = null,
         ?string $township = null,
-    ): View|RedirectResponse {
-        if (request('embed') && !EmbedKeyService::resolve()) {
-            return redirect()->route('front.home');
-        }
+    ): View {
         $lang = $this->lang;
 
         // Resolve condition slug → model

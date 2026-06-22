@@ -30,15 +30,31 @@
             <span class="poppins-semibold" style="font-size: 11px;">LT <strong class="poppins-semibold">{{ $prop['lt'] }}</strong>m²</span>
             <span class="poppins-semibold" style="font-size: 11px;">LB <strong class="poppins-semibold">{{ $prop['lb'] }}</strong>m²</span>
         </div>
-       <a href="#"
-          data-phone="{{ $prop['wa_phone'] ?? '' }}"
-          data-title="{{ $prop['title'] }}"
-          data-id="{{ $prop['property_id'] ?? '' }}"
-          data-url="{{ $prop['detail_url'] ?? '' }}"
-          onclick="event.preventDefault(); event.stopPropagation(); openWaModal(this.dataset.phone, this.dataset.title, this.dataset.id, this.dataset.url)"
-          class="btn w-100 font-weight-bold py-2 text-white poppins-bold d-flex align-items-center justify-content-center"
-          style="background-color: #43CB83; border-radius: 8px; border: none; font-size: 15px;">
-           <i class="fab fa-whatsapp me-2" style="font-size: 26px;"></i> WhatsApp
-       </a>
+@php
+    $keyWaPhone = (isset($keyData) && is_array($keyData) && !empty($keyData['no_hp']))
+        ? \App\Services\EmbedKeyService::normalizePhone($keyData['no_hp'])
+        : '';
+    $keyWaText  = rawurlencode('Halo, Saya ingin informasi lengkap tentang ' . ($prop['title'] ?? '') . ', Mohon kirimkan detailnya.');
+@endphp
+@if($keyWaPhone)
+    <a href="https://api.whatsapp.com/send/?phone={{ $keyWaPhone }}&text={{ $keyWaText }}&type=phone_number&app_absent=0"
+       target="_blank"
+       onclick="event.stopPropagation()"
+       class="btn w-100 font-weight-bold py-2 text-white poppins-bold d-flex align-items-center justify-content-center"
+       style="background-color: #43CB83; border-radius: 8px; border: none; font-size: 15px;">
+        <i class="fab fa-whatsapp me-2" style="font-size: 26px;"></i> WhatsApp
+    </a>
+@else
+    <a href="#"
+       data-phone="{{ $prop['wa_phone'] ?? '' }}"
+       data-title="{{ $prop['title'] }}"
+       data-id="{{ $prop['property_id'] ?? '' }}"
+       data-url="{{ $prop['detail_url'] ?? '' }}"
+       onclick="event.preventDefault(); event.stopPropagation(); openWaModal(this.dataset.phone, this.dataset.title, this.dataset.id, this.dataset.url)"
+       class="btn w-100 font-weight-bold py-2 text-white poppins-bold d-flex align-items-center justify-content-center"
+       style="background-color: #43CB83; border-radius: 8px; border: none; font-size: 15px;">
+        <i class="fab fa-whatsapp me-2" style="font-size: 26px;"></i> WhatsApp
+    </a>
+@endif
     </div>
 </div>

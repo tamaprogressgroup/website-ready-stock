@@ -122,7 +122,7 @@
 	@include('partials.google_tag_iframe')
 <div class="body">
 
-	@if(request('embed'))
+	@if(request('embed') === '1')
 		@include('front.partials.embed-navbar')
 	@else
 		@include('front.layout.navbar')
@@ -139,11 +139,11 @@
 	@endif
 
 	@php
-		$embedSuffix = request('embed')
+		$embedSuffix = request('embed') === '1'
 			? '?embed=1' . (request('key') ? '&key=' . rawurlencode(request('key')) : '')
 			: '';
 	@endphp
-	<div role="main" class="main" style="padding-top: {{ request('embed') ? '0' : '100px' }};">
+	<div role="main" class="main" style="padding-top: {{ request('embed') === '1' ? '0' : '100px' }};">
 		<div class="container py-4 mt-3">
 
 			@php
@@ -681,39 +681,52 @@
 				{{-- ============================================================
 				     SIDEBAR (RIGHT)
 				     ============================================================ --}}
-				@if(!request('embed'))
+				@if(request('embed') !== '1')
+				@php
+				    $keyWaPhone = (isset($keyData) && is_array($keyData) && !empty($keyData['no_hp']))
+				        ? \App\Services\EmbedKeyService::normalizePhone($keyData['no_hp'])
+				        : '';
+				    $keyWaText = rawurlencode('Halo, Saya ingin informasi lengkap tentang ' . ($property['title'] ?? '') . ', Mohon kirimkan detailnya.');
+				@endphp
 				<div class="col-lg-4">
 					<div class="card border border-color-grey-1 promo-card">
 						<div class="card-body p-4">
-
-							<h4 class="poppins-semibold text-center mb-4 text-5" style="color: #1C5FA8;">Dapatkan Promo Sekarang</h4>
-							<form action="{{ route('front.lead.store') }}" method="POST">
-								@csrf
-								<input type="hidden" name="property_id" value="{{ $property['property_id'] }}">
-								<div class="mb-3">
-									<select name="salutation" class="form-select text-3 py-2" style="background-color: #f8f9fa; border: none; border-radius: 8px; color: #555;">
-										<option value="">Title</option>
-										<option value="Bapak">Bapak</option>
-										<option value="Ibu">Ibu</option>
-									</select>
-								</div>
-								<div class="mb-3">
-									<input type="text" name="fullname" class="form-control text-3 py-2" placeholder="Nama" style="background-color: #f8f9fa; border: none; border-radius: 8px;">
-								</div>
-								<div class="mb-3">
-									<input name="phone_number" type="number" pattern="[\d\s\+\-\(\)]{6,20}" class="form-control text-3 py-2" placeholder="No. Telepon" style="background-color: #f8f9fa; border: none; border-radius: 8px;">
-								</div>
-								<div class="mb-4">
-									<input type="email" name="email" class="form-control text-3 py-2" placeholder="Email" style="background-color: #f8f9fa; border: none; border-radius: 8px;">
-								</div>
-								@if(!request('embed'))
-								<button type="submit"
+							@if($keyWaPhone)
+								<h4 class="poppins-semibold text-center mb-4 text-5" style="color: #1C5FA8;">Hubungi Sales</h4>
+								<a href="https://api.whatsapp.com/send/?phone={{ $keyWaPhone }}&text={{ $keyWaText }}&type=phone_number&app_absent=0"
+								   target="_blank"
 								   class="btn w-100 font-weight-bold py-2 text-color-light d-flex align-items-center justify-content-center"
 								   style="background-color: #61c97d; border-radius: 8px; border: none; font-size: 14px;">
-								   <i class="fab fa-whatsapp me-2 text-4"></i> WhatsApp
-								</button>
-								@endif
-							</form>
+								   <i class="fab fa-whatsapp me-2 text-4"></i> WhatsApp Sekarang
+								</a>
+							@else
+								<h4 class="poppins-semibold text-center mb-4 text-5" style="color: #1C5FA8;">Dapatkan Promo Sekarang</h4>
+								<form action="{{ route('front.lead.store') }}" method="POST">
+									@csrf
+									<input type="hidden" name="property_id" value="{{ $property['property_id'] }}">
+									<div class="mb-3">
+										<select name="salutation" class="form-select text-3 py-2" style="background-color: #f8f9fa; border: none; border-radius: 8px; color: #555;">
+											<option value="">Title</option>
+											<option value="Bapak">Bapak</option>
+											<option value="Ibu">Ibu</option>
+										</select>
+									</div>
+									<div class="mb-3">
+										<input type="text" name="fullname" class="form-control text-3 py-2" placeholder="Nama" style="background-color: #f8f9fa; border: none; border-radius: 8px;">
+									</div>
+									<div class="mb-3">
+										<input name="phone_number" type="number" pattern="[\d\s\+\-\(\)]{6,20}" class="form-control text-3 py-2" placeholder="No. Telepon" style="background-color: #f8f9fa; border: none; border-radius: 8px;">
+									</div>
+									<div class="mb-4">
+										<input type="email" name="email" class="form-control text-3 py-2" placeholder="Email" style="background-color: #f8f9fa; border: none; border-radius: 8px;">
+									</div>
+									<button type="submit"
+									   class="btn w-100 font-weight-bold py-2 text-color-light d-flex align-items-center justify-content-center"
+									   style="background-color: #61c97d; border-radius: 8px; border: none; font-size: 14px;">
+									   <i class="fab fa-whatsapp me-2 text-4"></i> WhatsApp
+									</button>
+								</form>
+							@endif
 						</div>
 					</div>
 				</div>
@@ -765,17 +778,31 @@
 								<div>LT <span class="font-weight-bold text-color-dark ms-1">{{ $prop['lt'] }}m²</span></div>
 								<div>LB <span class="font-weight-bold text-color-dark ms-1">{{ $prop['lb'] }}m²</span></div>
 							</div>
-							@if(!request('embed'))
-							<a href="#"
-							   data-phone="{{ $prop['wa_phone'] ?? '' }}"
-							   data-title="{{ $prop['title'] }}"
-							   data-id="{{ $prop['property_id'] ?? '' }}"
-							   data-url="{{ $prop['detail_url'] ?? '' }}"
-							   onclick="event.preventDefault(); event.stopPropagation(); openWaModal(this.dataset.phone, this.dataset.title, this.dataset.id, this.dataset.url)"
-							   class="btn w-100 font-weight-bold py-2 text-color-light"
-							   style="background-color: #61c97d; border-radius: 8px; border: none; font-size: 13px;">
-							   <i class="fab fa-whatsapp me-2 text-4"></i> WhatsApp
-							</a>
+							@php
+							    $relKeyWaPhone = (request('embed') !== '1' && isset($keyData) && is_array($keyData) && !empty($keyData['no_hp']))
+							        ? \App\Services\EmbedKeyService::normalizePhone($keyData['no_hp'])
+							        : '';
+							    $relKeyWaText  = rawurlencode('Halo, Saya ingin informasi lengkap tentang ' . ($prop['title'] ?? '') . ', Mohon kirimkan detailnya.');
+							@endphp
+							@if($relKeyWaPhone)
+							    <a href="https://api.whatsapp.com/send/?phone={{ $relKeyWaPhone }}&text={{ $relKeyWaText }}&type=phone_number&app_absent=0"
+							       target="_blank"
+							       onclick="event.stopPropagation()"
+							       class="btn w-100 font-weight-bold py-2 text-color-light"
+							       style="background-color: #61c97d; border-radius: 8px; border: none; font-size: 13px;">
+							       <i class="fab fa-whatsapp me-2 text-4"></i> WhatsApp
+							    </a>
+							@elseif(request('embed') !== '1')
+							    <a href="#"
+							       data-phone="{{ $prop['wa_phone'] ?? '' }}"
+							       data-title="{{ $prop['title'] }}"
+							       data-id="{{ $prop['property_id'] ?? '' }}"
+							       data-url="{{ $prop['detail_url'] ?? '' }}"
+							       onclick="event.preventDefault(); event.stopPropagation(); openWaModal(this.dataset.phone, this.dataset.title, this.dataset.id, this.dataset.url)"
+							       class="btn w-100 font-weight-bold py-2 text-color-light"
+							       style="background-color: #61c97d; border-radius: 8px; border: none; font-size: 13px;">
+							       <i class="fab fa-whatsapp me-2 text-4"></i> WhatsApp
+							    </a>
 							@endif
 						</div>
 					</div>
@@ -787,7 +814,7 @@
 		</div>
 	</div>
 
-	@if(!request('embed'))
+	@if(request('embed') !== '1')
 		@include('front.layout.footer')
 	@endif
 
