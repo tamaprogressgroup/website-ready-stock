@@ -38,7 +38,7 @@
                         </label>
                         <div class="mb-2 p-3 rounded-3" style="background:#f0f4f8; font-size:12px; border:1px dashed #bcd0e8;" id="dim-hint">
                             <i class="fas fa-ruler-combined me-1" style="color:#3065A3;"></i>
-                            Dimensi wajib: <strong id="dim-hint-text">3520 × 1216 piksel</strong> &nbsp;|&nbsp;
+                            Dimensi: <strong id="dim-hint-text">3520 × 1216 piksel</strong> &nbsp;|&nbsp;
                             <i class="fas fa-weight-hanging me-1" style="color:#3065A3;"></i>
                             Maks: <strong>10 MB</strong> &nbsp;|&nbsp;
                             Format: JPG, PNG, WebP
@@ -135,31 +135,26 @@
 </div>
 
 <script>
-// Dimensi wajib per posisi
-const BANNER_DIMS = {
-    'ALLPRODUCT_TENGAH': [1536, 1024],
-    'default':           [3520, 1216],
-};
+const BANNER_DIMS     = { 'default': [3520, 1216] };
+const BANNER_NO_DIM   = ['ALLPRODUCT_TENGAH'];
 
 function getRequiredDim() {
     const pos = document.getElementById('banner-position')?.value || '';
+    if (BANNER_NO_DIM.includes(pos)) return null; // null = no restriction
     return BANNER_DIMS[pos] || BANNER_DIMS['default'];
 }
 
-// Update hint text when position changes
-document.getElementById('banner-position')?.addEventListener('change', function() {
-    const [w, h] = getRequiredDim();
-    document.getElementById('dim-hint-text').textContent = w + ' × ' + h + ' piksel';
-    // Re-validate if file already selected
+function updateDimHint() {
+    const dim = getRequiredDim();
+    document.getElementById('dim-hint-text').textContent = dim
+        ? dim[0] + ' × ' + dim[1] + ' piksel'
+        : 'Bebas (tidak ada validasi dimensi)';
     const input = document.getElementById('banner-image');
     if (input?.files?.length) previewBanner(input);
-});
+}
 
-// Set hint on page load (for edit page with existing position)
-(function() {
-    const [w, h] = getRequiredDim();
-    document.getElementById('dim-hint-text').textContent = w + ' × ' + h + ' piksel';
-})();
+document.getElementById('banner-position')?.addEventListener('change', updateDimHint);
+updateDimHint();
 
 function previewBanner(input) {
     const preview = document.getElementById('banner-preview');
@@ -177,7 +172,7 @@ function previewBanner(input) {
         return;
     }
 
-    const [reqW, reqH] = getRequiredDim();
+    const reqDim = getRequiredDim();
 
     const reader = new FileReader();
     reader.onload = function(e) {
@@ -186,11 +181,17 @@ function previewBanner(input) {
 
         const tempImg = new Image();
         tempImg.onload = function() {
-            const ok = tempImg.width === reqW && tempImg.height === reqH;
-            dimText.innerHTML = `Dimensi: <strong>${tempImg.width} × ${tempImg.height}</strong>&nbsp;`
-                + (ok
-                    ? '<span class="text-success"><i class="fas fa-check-circle"></i> Sesuai</span>'
-                    : `<span class="text-danger"><i class="fas fa-times-circle"></i> Harus tepat ${reqW} × ${reqH}</span>`);
+            if (!reqDim) {
+                dimText.innerHTML = `Dimensi: <strong>${tempImg.width} × ${tempImg.height}</strong>&nbsp;`
+                    + '<span class="text-success"><i class="fas fa-check-circle"></i> Sesuai</span>';
+            } else {
+                const [reqW, reqH] = reqDim;
+                const ok = tempImg.width === reqW && tempImg.height === reqH;
+                dimText.innerHTML = `Dimensi: <strong>${tempImg.width} × ${tempImg.height}</strong>&nbsp;`
+                    + (ok
+                        ? '<span class="text-success"><i class="fas fa-check-circle"></i> Sesuai</span>'
+                        : `<span class="text-danger"><i class="fas fa-times-circle"></i> Harus tepat ${reqW} × ${reqH}</span>`);
+            }
         };
         tempImg.src = e.target.result;
     };

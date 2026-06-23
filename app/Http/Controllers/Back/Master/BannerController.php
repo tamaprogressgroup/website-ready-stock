@@ -25,9 +25,11 @@ class BannerController extends Controller
 
     // Dimensi wajib per posisi  [width, height]
     private const DIM = [
-        'ALLPRODUCT_TENGAH' => [1536, 1024],
-        'default'           => [3520, 1216],
+        'default' => [3520, 1216],
     ];
+
+    // Posisi tanpa validasi dimensi (terima ukuran berapapun)
+    private const NO_DIM = ['ALLPRODUCT_TENGAH'];
 
     public function index()
     {
@@ -45,16 +47,23 @@ class BannerController extends Controller
 
     public function store(Request $request)
     {
-        [$w, $h]  = self::DIM[$request->input('position', '')] ?? self::DIM['default'];
+        $pos      = $request->input('position', '');
+        $noDim    = in_array($pos, self::NO_DIM);
+        if (!$noDim) {
+            [$w, $h] = self::DIM[$pos] ?? self::DIM['default'];
+        }
+
         $request->validate([
-            'image'      => "required|image|mimes:jpeg,png,jpg,webp|max:10240|dimensions:width={$w},height={$h}",
+            'image'      => $noDim
+                ? 'required|image|mimes:jpeg,png,jpg,webp|max:10240'
+                : "required|image|mimes:jpeg,png,jpg,webp|max:10240|dimensions:width={$w},height={$h}",
             'target_url' => 'nullable|url|max:500',
             'position'   => 'required|string|in:' . implode(',', array_keys(self::POSITIONS)),
             'priority'   => 'required|integer|min:1',
             'is_active'  => 'nullable|boolean',
         ], [
             'image.max'        => 'Ukuran file banner tidak boleh lebih dari 10 MB.',
-            'image.dimensions' => "Gambar banner harus berukuran tepat {$w} × {$h} piksel.",
+            'image.dimensions' => $noDim ? '' : "Gambar banner harus berukuran tepat {$w} × {$h} piksel.",
             'position.in'      => 'Posisi banner tidak valid.',
             'priority.required'=> 'Urutan prioritas wajib diisi.',
         ]);
@@ -64,7 +73,7 @@ class BannerController extends Controller
             'target_url'       => $request->target_url,
             'position'         => $request->position,
             'priority'         => $request->priority,
-            'is_active'        => $request->boolean('is_active', true) ? 1 : 0,
+            'is_active'        => $request->has('is_active') ? 1 : 0,
             'created_user_id'  => Auth::guard('admin')->id(),
             'craeted_datetime' => now(), // typo di DB diikuti
         ]);
@@ -86,16 +95,23 @@ class BannerController extends Controller
 
     public function update(Request $request, $id)
     {
-        [$w, $h]  = self::DIM[$request->input('position', '')] ?? self::DIM['default'];
+        $pos   = $request->input('position', '');
+        $noDim = in_array($pos, self::NO_DIM);
+        if (!$noDim) {
+            [$w, $h] = self::DIM[$pos] ?? self::DIM['default'];
+        }
+
         $request->validate([
-            'image'      => "nullable|image|mimes:jpeg,png,jpg,webp|max:10240|dimensions:width={$w},height={$h}",
+            'image'      => $noDim
+                ? 'nullable|image|mimes:jpeg,png,jpg,webp|max:10240'
+                : "nullable|image|mimes:jpeg,png,jpg,webp|max:10240|dimensions:width={$w},height={$h}",
             'target_url' => 'nullable|url|max:500',
             'position'   => 'required|string|in:' . implode(',', array_keys(self::POSITIONS)),
             'priority'   => 'required|integer|min:1',
             'is_active'  => 'nullable|boolean',
         ], [
             'image.max'        => 'Ukuran file banner tidak boleh lebih dari 10 MB.',
-            'image.dimensions' => "Gambar banner harus berukuran tepat {$w} × {$h} piksel.",
+            'image.dimensions' => $noDim ? '' : "Gambar banner harus berukuran tepat {$w} × {$h} piksel.",
             'position.in'      => 'Posisi banner tidak valid.',
         ]);
 
@@ -105,7 +121,7 @@ class BannerController extends Controller
             'target_url'       => $request->target_url,
             'position'         => $request->position,
             'priority'         => $request->priority,
-            'is_active'        => $request->boolean('is_active', true) ? 1 : 0,
+            'is_active'        => $request->has('is_active') ? 1 : 0,
             'updated_user_id'  => Auth::guard('admin')->id(),
             'updated_datetime' => now(),
         ];
