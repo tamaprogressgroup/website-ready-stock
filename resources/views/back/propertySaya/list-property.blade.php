@@ -291,13 +291,6 @@
                                         <i class="fas fa-eye me-1"></i> Tayangkan
                                     </button>
                                 </form>
-                                <form action="{{ route('customer.property.destroy', $item->property_id) }}" method="POST" class="d-inline"
-                                      onsubmit="return confirm('Hapus properti ini secara permanen?')">
-                                    @csrf @method('DELETE')
-                                    <button type="submit" class="btn btn-sm btn-outline-danger" style="border-radius:6px;">
-                                        <i class="fas fa-trash me-1"></i> Hapus
-                                    </button>
-                                </form>
                             @elseif($item->status_id === 1)
                                 <form action="{{ route('customer.property.status', $item->property_id) }}" method="POST" class="d-inline">
                                     @csrf @method('PATCH')
@@ -323,8 +316,14 @@
                                     </button>
                                 </form>
                             @elseif($item->status_id === 3)
-                                <span class="text-muted" style="font-size:12px;"><i class="fas fa-lock me-1"></i> Properti terjual tidak dapat diubah</span>
+                                <span class="text-muted" style="font-size:12px;"><i class="fas fa-lock me-1"></i> Terjual</span>
                             @endif
+
+                            {{-- Hapus — tersedia untuk semua status --}}
+                            <button type="button" class="btn btn-sm btn-outline-danger" style="border-radius:6px;"
+                                    onclick="openDeleteModal('{{ route('customer.property.destroy', $item->property_id) }}', '{{ addslashes($item->translations->first()?->title ?? 'Properti ini') }}')">
+                                <i class="fas fa-trash me-1"></i> Hapus
+                            </button>
                         </div>
                     </div>
                 </div>
@@ -334,4 +333,64 @@
         <div class="mt-3">{{ $items->links() }}</div>
     @endif
 </div>
+
+{{-- Modal Konfirmasi Hapus --}}
+<div class="modal fade" id="deletePropertyModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered" style="max-width:440px;">
+        <div class="modal-content border-0" style="border-radius:16px; overflow:hidden; box-shadow:0 20px 60px rgba(0,0,0,0.18);">
+
+            {{-- Header merah --}}
+            <div class="modal-header border-0 pb-0" style="background:#fff2f2; padding:28px 28px 20px;">
+                <div class="d-flex align-items-center gap-3">
+                    <div style="width:48px;height:48px;border-radius:50%;background:#fee2e2;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+                        <i class="fas fa-trash-alt" style="color:#dc3545;font-size:20px;"></i>
+                    </div>
+                    <div>
+                        <h5 class="modal-title mb-0 fw-bold" style="color:#1a1a1a;font-size:18px;">Hapus Properti?</h5>
+                        <p class="mb-0 mt-1" style="font-size:13px;color:#6c757d;">Tindakan ini tidak dapat dibatalkan.</p>
+                    </div>
+                </div>
+            </div>
+
+            {{-- Body --}}
+            <div class="modal-body" style="padding:20px 28px 24px;">
+                <p style="font-size:14px;color:#495057;margin-bottom:12px;">Anda akan menghapus properti:</p>
+                <div style="background:#f8f9fa;border-radius:10px;padding:14px 16px;border-left:4px solid #dc3545;">
+                    <p id="delete-property-name" class="mb-0 fw-bold" style="font-size:14px;color:#1a1a1a;line-height:1.5;"></p>
+                </div>
+                <p class="mt-3 mb-0" style="font-size:13px;color:#868e96;">
+                    <i class="fas fa-exclamation-triangle me-1" style="color:#f59e0b;"></i>
+                    Semua data properti termasuk foto, spesifikasi, dan fasilitas akan dihapus permanen.
+                </p>
+            </div>
+
+            {{-- Footer --}}
+            <div class="modal-footer border-0" style="padding:0 28px 28px;gap:10px;">
+                <button type="button" class="btn fw-semibold px-4"
+                        data-bs-dismiss="modal"
+                        style="border-radius:10px;border:1px solid #e0e0e0;color:#495057;background:#fff;font-size:14px;height:44px;">
+                    Batal
+                </button>
+                <form id="delete-property-form" method="POST" class="m-0">
+                    @csrf
+                    @method('DELETE')
+                    <button type="submit" class="btn btn-danger fw-semibold px-4"
+                            style="border-radius:10px;font-size:14px;height:44px;background:#dc3545;border-color:#dc3545;">
+                        <i class="fas fa-trash-alt me-2"></i> Ya, Hapus
+                    </button>
+                </form>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<script>
+function openDeleteModal(actionUrl, propertyName) {
+    document.getElementById('delete-property-name').textContent = propertyName;
+    document.getElementById('delete-property-form').action = actionUrl;
+    var modal = new bootstrap.Modal(document.getElementById('deletePropertyModal'));
+    modal.show();
+}
+</script>
 @endsection

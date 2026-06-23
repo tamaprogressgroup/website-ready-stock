@@ -650,9 +650,7 @@ class PropertyController extends Controller
         $unit   = PropertyUnit::with(['interiors.translations', 'specs.translations', 'facilities.translations', 'nearbyLocations.translations', 'extraFeatures.translations'])
             ->where('created_user_id', $userId)->findOrFail($id);
 
-        if ($unit->status_id !== 0) {
-            return redirect()->route('customer.property', ['tab' => 'draft'])->with('error', 'Hanya properti berstatus Draft yang dapat dihapus.');
-        }
+        $tab = array_flip(self::STATUS_MAP)[$unit->status_id] ?? 'draft';
 
         DB::beginTransaction();
         try {
@@ -666,7 +664,7 @@ class PropertyController extends Controller
             $unit->delete();
             DB::commit();
             $this->flushCaches();
-            return redirect()->route('customer.property', ['tab' => 'draft'])->with('success', 'Properti berhasil dihapus.');
+            return redirect()->route('customer.property', ['tab' => $tab])->with('success', 'Properti berhasil dihapus.');
         } catch (\Exception $e) {
             DB::rollBack();
             return redirect()->back()->with('error', 'Gagal menghapus properti: ' . $e->getMessage());
