@@ -27,8 +27,20 @@
 	<link rel="stylesheet" href="{{ asset('vendor/owl.carousel/assets/owl.theme.default.min.css') }}">
 	<style>
 		.price-box { border-left: 4px solid #f0ad4e; padding-left: 15px; }
-		.spec-table td { padding: 8px 0; color: #555; border-bottom: 1px solid #eee; }
-		.spec-table td:first-child { width: 30%; color: #888; font-size: 13px; }
+		.spec-table td { padding: 6px 4px; color: #555; border-bottom: 1px solid #eee; vertical-align: top; }
+		.spec-table .spec-label { width: 45%; color: #888; font-size: 13px; padding-right: 0; white-space: nowrap; }
+		.spec-table .spec-colon { width: 20px; color: #888; padding: 6px 6px; white-space: nowrap; }
+		.spec-table .spec-value { color: #555; word-break: break-word; }
+		@media (max-width: 576px) {
+			.spec-table .spec-label { width: auto; white-space: normal; }
+		}
+		/* Lihat Lainnya */
+		.desc-collapsed { max-height: 130px; overflow: hidden; position: relative; }
+		.desc-collapsed::after { content: ''; position: absolute; bottom: 0; left: 0; right: 0; height: 50px; background: linear-gradient(to bottom, transparent, #fff); pointer-events: none; }
+		.spec-collapsed { max-height: 180px; overflow: hidden; position: relative; }
+		.spec-collapsed::after { content: ''; position: absolute; bottom: 0; left: 0; right: 0; height: 50px; background: linear-gradient(to bottom, transparent, #fff); pointer-events: none; }
+		.btn-read-more { background: none; border: 1px solid #3065A3; border-radius: 6px; color: #3065A3; font-size: 13px; font-weight: 600; padding: 4px 14px; cursor: pointer; display: inline-flex; align-items: center; gap: 4px; margin-top: 8px; }
+		.btn-read-more:hover { background: #f0f4ff; }
 		.check-list { padding-left: 0; }
 		.check-list li { list-style: none; position: relative; padding-left: 26px; margin-bottom: 10px; color: #555; font-size: 13px; }
 		.check-list li::before { content: '\f058'; font-family: 'Font Awesome 5 Free'; font-weight: 900; position: absolute; left: 0; top: 1px; color: #61c97d; }
@@ -553,7 +565,8 @@
 					@if ($property['description'])
 					<div class="mb-4 pb-4 border-bottom border-color-grey-1">
 						<h4 class="poppins-semibold text-4 mb-3" style="font-size: 24px;" >Deskripsi</h4>
-						<div class="poppins-regular text-3" style="line-height: 1.7; font-size:14px;">{!! strip_tags($property['description']) === $property['description'] ? nl2br(e($property['description'])) : $property['description'] !!}</div>
+						<div id="desc-content" class="poppins-regular text-3 desc-collapsed" style="line-height: 1.7; font-size:14px;">{!! strip_tags($property['description']) === $property['description'] ? nl2br(e($property['description'])) : $property['description'] !!}</div>
+						<button id="desc-toggle" class="btn-read-more poppins-semibold" onclick="toggleDesc()">Lihat Lainnya ▾</button>
 					</div>
 					@endif
 
@@ -580,18 +593,20 @@
 					@if (!empty($property['specs']))
 					<div class="mb-4 pb-4 border-bottom border-color-grey-1">
 						<h4 class="poppins-semibold text-4 mb-3" style="font-size: 24px;">Spesifikasi</h4>
-						<table class="table table-borderless spec-table text-3 mb-0">
-							<tbody>
-								@foreach ($property['specs'] as $spec)
-								<tr>
-									<td class="poppins-regular" style="font-size: 14px;" >{{ $spec['key'] }}</td>
-									<td class="poppins-medium" style="font-size: 14px;" >
-										: {{ $spec['value'] }}{{ $spec['unit'] ? ' ' . $spec['unit'] : '' }}
-									</td>
-								</tr>
-								@endforeach
-							</tbody>
-						</table>
+						<div id="spec-content" class="spec-collapsed">
+							<table class="table table-borderless spec-table text-3 mb-0">
+								<tbody>
+									@foreach ($property['specs'] as $spec)
+									<tr>
+										<td class="poppins-regular spec-label" style="font-size: 14px;">{{ $spec['key'] }}</td>
+										<td class="spec-colon poppins-regular">:</td>
+										<td class="poppins-medium spec-value" style="font-size: 14px;">{{ $spec['value'] }}{{ $spec['unit'] ? ' ' . $spec['unit'] : '' }}</td>
+									</tr>
+									@endforeach
+								</tbody>
+							</table>
+						</div>
+						<button id="spec-toggle" class="btn-read-more poppins-semibold" onclick="toggleSpec()">Lihat Lainnya ▾</button>
 					</div>
 					@endif
 
@@ -955,6 +970,30 @@
     }
 
 })(jQuery);
+
+/* Lihat Lainnya */
+function toggleDesc() {
+    var content = document.getElementById('desc-content');
+    var btn     = document.getElementById('desc-toggle');
+    if (content.classList.contains('desc-collapsed')) {
+        content.classList.remove('desc-collapsed');
+        btn.textContent = 'Tutup ▴';
+    } else {
+        content.classList.add('desc-collapsed');
+        btn.textContent = 'Lihat Lainnya ▾';
+    }
+}
+function toggleSpec() {
+    var content = document.getElementById('spec-content');
+    var btn     = document.getElementById('spec-toggle');
+    if (content.classList.contains('spec-collapsed')) {
+        content.classList.remove('spec-collapsed');
+        btn.textContent = 'Tutup ▴';
+    } else {
+        content.classList.add('spec-collapsed');
+        btn.textContent = 'Lihat Lainnya ▾';
+    }
+}
 </script>
 
 @include('front.partials.whatsapp-modal')

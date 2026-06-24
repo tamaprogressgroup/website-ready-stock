@@ -60,6 +60,10 @@ abstract class BaseFrontController extends Controller
         $kotaName     = $unit->kota?->nama_kota       ?? '';
         $location     = implode(', ', array_filter([$townshipName, $kotaName])) ?: 'Indonesia';
 
+        // Gunakan mini thumbnail (order=2) untuk card, fallback ke main (order=1)
+        $mini     = $unit->interiors->firstWhere('order', 2);
+        $interior = $mini ?? $unit->interiors->first();
+
         // Store relative path only — full URL resolved in view via url() so host stays dynamic
         $image = ($interior && $interior->image)
             ? 'storage/' . $interior->image
