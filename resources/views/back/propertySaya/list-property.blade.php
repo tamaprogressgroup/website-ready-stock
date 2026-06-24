@@ -330,7 +330,23 @@
             </div>
         @endforeach
 
-        <div class="mt-3">{{ $items->links() }}</div>
+        <div class="mt-3 d-flex justify-content-between align-items-center">
+            @if($items->previousPageUrl())
+                <a href="{{ $items->previousPageUrl() }}" class="btn btn-sm btn-outline-secondary" style="border-radius:8px;">
+                    <i class="fas fa-arrow-left me-1"></i> Sebelumnya
+                </a>
+            @else
+                <span></span>
+            @endif
+            <span class="text-muted" style="font-size:13px;">Halaman {{ $items->currentPage() }}</span>
+            @if($items->hasMorePages())
+                <a href="{{ $items->nextPageUrl() }}" class="btn btn-sm btn-outline-secondary" style="border-radius:8px;">
+                    Selanjutnya <i class="fas fa-arrow-right ms-1"></i>
+                </a>
+            @else
+                <span></span>
+            @endif
+        </div>
     @endif
 </div>
 

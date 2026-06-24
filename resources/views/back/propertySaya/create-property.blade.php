@@ -1,6 +1,18 @@
 @extends('back.layout.app')
 
 @section('content')
+<link href="https://cdnjs.cloudflare.com/ajax/libs/quill/1.3.7/quill.snow.min.css" rel="stylesheet">
+<style>
+.ql-container { font-size:14px; }
+.ql-editor { min-height:160px; }
+.ql-toolbar.ql-snow { border-radius:6px 6px 0 0; border-color:#ced4da; }
+.ql-container.ql-snow { border-radius:0 0 6px 6px; border-color:#ced4da; }
+.extra-icon-upload-zone { margin-top:6px; padding-top:6px; border-top:1px dashed #e5e7eb; }
+.extra-icon-upload-label { font-size:10px; color:#9ca3af; margin-bottom:3px; }
+.extra-icon-newpreview { display:none; align-items:center; gap:6px; margin-bottom:4px; background:#eff6ff; border:1px solid #bfdbfe; border-radius:5px; padding:3px 7px; }
+.extra-icon-newpreview img { width:22px; height:22px; object-fit:contain; }
+.extra-icon-newpreview span { font-size:10px; color:#1d4ed8; flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+</style>
 <style>
     .bg-light-blue { background-color: #f8fbff; }
     .cursor-pointer { cursor: pointer; }
@@ -42,9 +54,9 @@
     .icon-picker-btn:hover { border-color:#0d6efd; background:#f4f8ff; }
     .icon-picker-btn i { font-size:16px; flex-shrink:0; }
     .icon-picker-btn .ip-label { overflow:hidden; text-overflow:ellipsis; font-size:11px; color:#6b7280; flex:1; min-width:0; }
-    #gip { position:fixed; z-index:9999; background:#fff; border:1px solid #d1d5db; border-radius:10px; box-shadow:0 8px 30px rgba(0,0,0,0.15); width:300px; max-height:340px; flex-direction:column; overflow:hidden; }
-    #gip-search { width:100%; padding:10px 12px; border:none; border-bottom:1px solid #e5e7eb; outline:none; font-size:13px; box-sizing:border-box; }
-    #gip-grid { overflow-y:auto; padding:8px; display:grid; grid-template-columns:repeat(5,1fr); gap:4px; }
+    #gip { position:fixed; z-index:9999; background:#fff; border:1px solid #d1d5db; border-radius:10px; box-shadow:0 8px 30px rgba(0,0,0,0.15); width:300px; height:340px; display:none; flex-direction:column; overflow:hidden; }
+    #gip-search { width:100%; padding:10px 12px; border:none; border-bottom:1px solid #e5e7eb; outline:none; font-size:13px; box-sizing:border-box; flex-shrink:0; }
+    #gip-grid { overflow-y:auto; padding:8px; display:grid; grid-template-columns:repeat(5,1fr); gap:4px; flex:1; min-height:0; }
     .gip-item { display:flex; flex-direction:column; align-items:center; padding:8px 4px; border-radius:6px; cursor:pointer; color:#374151; transition:background 0.1s; }
     .gip-item:hover { background:#f4f8ff; color:#0d6efd; }
     .gip-item i { font-size:18px; margin-bottom:3px; }
@@ -179,7 +191,8 @@
                     </div>
                     <div class="mb-4">
                         <label class="form-label text-dark fw-semibold">Deskripsi Properti <span class="badge-wajib">Wajib</span></label>
-                        <textarea class="form-control" name="description" rows="5" placeholder="Ceritakan detail menarik tentang properti ini...">{{ old('description') }}</textarea>
+                        <div id="quill-description"></div>
+                        <input type="hidden" name="description" id="description-input" value="{{ old('description') }}">
                     </div>
 
                     {{-- SEO Meta --}}
@@ -283,7 +296,7 @@
                     <div id="container-fasilitas">
                         @foreach(old('facility_names', ['']) as $fi => $fn)
                         <div class="facility-row dynamic-row">
-                            <div class="row g-2 align-items-center">
+                            <div class="row g-2 align-items-start">
                                 <div class="col-md-4">
                                     <label class="form-label mb-1" style="font-size:12px;">Nama Fasilitas</label>
                                     <input type="text" class="form-control py-2" name="facility_names[]" value="{{ $fn }}" placeholder="Contoh: Kolam Renang">
@@ -291,18 +304,27 @@
                                 <div class="col-md-3">
                                     <label class="form-label mb-1" style="font-size:12px;">Ikon</label>
                                     @php $facIcon = old('facility_icons.'.$fi, 'fas fa-check'); @endphp
-                                    <button type="button" class="btn icon-picker-btn">
+                                    <button type="button" class="btn icon-picker-btn" onclick="gipOpen(this)">
                                         <i class="{{ $facIcon }}"></i>
                                         <span class="ip-label">{{ $facIcon }}</span>
                                     </button>
                                     <input type="hidden" name="facility_icons[]" value="{{ $facIcon }}" class="icon-picker-val">
+                                    <div class="extra-icon-upload-zone">
+                                        <div class="extra-icon-upload-label">Upload icon gambar (opsional):</div>
+                                        <div class="extra-icon-newpreview">
+                                            <img src="" alt="" class="extra-icon-newpreview-thumb">
+                                            <span class="extra-icon-newpreview-name"></span>
+                                            <button type="button" class="btn p-0 btn-clear-icon-new" style="font-size:11px; color:#6b7280; flex-shrink:0;"><i class="fas fa-times"></i></button>
+                                        </div>
+                                        <input type="file" name="facility_icon_images[]" accept="image/jpeg,image/png,image/webp,image/gif" class="extra-icon-img-input form-control form-control-sm" style="font-size:11px; padding:2px 6px;">
+                                    </div>
                                 </div>
                                 <div class="col-md-3">
                                     <label class="form-label mb-1" style="font-size:12px;">Gambar (opsional)</label>
                                     <input type="file" class="form-control" name="facility_images[]" accept="image/*">
                                     <input type="hidden" name="facility_existing_imgs[]" value="">
                                 </div>
-                                <div class="col-md-2 d-flex align-items-end pb-1">
+                                <div class="col-md-2 d-flex align-items-start pt-4">
                                     <button type="button" class="btn btn-remove-row px-3 btn-delete w-100"><i class="fas fa-trash"></i></button>
                                 </div>
                             </div>
@@ -316,22 +338,31 @@
                     <p class="text-muted mb-3" style="font-size:13px;">Fitur unggulan tambahan dengan ikon CSS class dan nama.</p>
                     <div id="container-extra">
                         @foreach(old('extra_names', ['']) as $ei => $en)
+                        @php $extraIcon = old('extra_icons.'.$ei, 'fas fa-star'); @endphp
                         <div class="facility-row dynamic-row">
-                            <div class="row g-2 align-items-center">
+                            <div class="row g-2 align-items-start">
                                 <div class="col-md-5">
                                     <label class="form-label mb-1" style="font-size:12px;">Nama Fitur</label>
                                     <input type="text" class="form-control py-2" name="extra_names[]" value="{{ $en }}" placeholder="Contoh: Smart Home System">
                                 </div>
                                 <div class="col-md-5">
                                     <label class="form-label mb-1" style="font-size:12px;">Ikon</label>
-                                    @php $extraIcon = old('extra_icons.'.$ei, 'fas fa-star'); @endphp
-                                    <button type="button" class="btn icon-picker-btn">
+                                    <button type="button" class="btn icon-picker-btn" onclick="gipOpen(this)">
                                         <i class="{{ $extraIcon }}"></i>
                                         <span class="ip-label">{{ $extraIcon }}</span>
                                     </button>
                                     <input type="hidden" name="extra_icons[]" value="{{ $extraIcon }}" class="icon-picker-val">
+                                    <div class="extra-icon-upload-zone">
+                                        <div class="extra-icon-upload-label">Upload icon gambar (opsional):</div>
+                                        <div class="extra-icon-newpreview">
+                                            <img src="" alt="" class="extra-icon-newpreview-thumb">
+                                            <span class="extra-icon-newpreview-name"></span>
+                                            <button type="button" class="btn p-0 btn-clear-icon-new" style="font-size:11px; color:#6b7280; flex-shrink:0;"><i class="fas fa-times"></i></button>
+                                        </div>
+                                        <input type="file" name="extra_icon_images[]" accept="image/jpeg,image/png,image/webp,image/gif" class="extra-icon-img-input form-control form-control-sm" style="font-size:11px; padding:2px 6px;">
+                                    </div>
                                 </div>
-                                <div class="col-md-2 d-flex align-items-end pb-1">
+                                <div class="col-md-2 d-flex align-items-start pt-4">
                                     <button type="button" class="btn btn-remove-row px-3 btn-delete w-100"><i class="fas fa-trash"></i></button>
                                 </div>
                             </div>
@@ -425,8 +456,8 @@
                                     <img src="" class="img-fluid d-none rounded" style="max-height:200px;" id="img-preview-mini">
                                 </div>
                             </label>
-                            <input type="file" id="upload-mini" name="mini_thumbnail" class="d-none preview-input" data-target="mini" data-req-w="4096" data-req-h="2414" accept="image/*">
-                            <div class="mt-1 ps-1" style="font-size:11px; color:#777;"><i class="fas fa-ruler-combined me-1" style="color:#3065A3;"></i>Dimensi: <strong>4096 × 2414</strong> px &nbsp;|&nbsp; Maks 10MB</div>
+                            <input type="file" id="upload-mini" name="mini_thumbnail" class="d-none preview-input" data-target="mini" data-req-w="4096" data-req-h="2298" accept="image/*">
+                            <div class="mt-1 ps-1" style="font-size:11px; color:#777;"><i class="fas fa-ruler-combined me-1" style="color:#3065A3;"></i>Dimensi: <strong>4096 × 2298</strong> px &nbsp;|&nbsp; Maks 10MB</div>
                             <div id="dim-feedback-mini" style="font-size:11px; margin-top:2px;"></div>
                         </div>
                     </div>
@@ -442,8 +473,8 @@
                                     </div>
                                 </div>
                                 <div class="col-md-4">
-                                    <input type="file" name="interior_images[]" class="form-control-file gallery-input" data-req-w="4096" data-req-h="2298" accept="image/*">
-                                    <div style="font-size:11px; color:#777; margin-top:3px;"><i class="fas fa-ruler-combined me-1" style="color:#3065A3;"></i><strong>4096 × 2298</strong> px</div>
+                                    <input type="file" name="interior_images[]" class="form-control-file gallery-input" accept="image/*">
+                                    <div style="font-size:11px; color:#777; margin-top:3px;"><i class="fas fa-image me-1" style="color:#3065A3;"></i>JPG, PNG, WebP &nbsp;|&nbsp; Maks 10MB</div>
                                     <div class="dim-feedback" style="font-size:11px; margin-top:1px;"></div>
                                 </div>
                                 <div class="col-md-4">
@@ -468,7 +499,14 @@
                         <div class="col-md-6 mb-3">
                             <label class="form-label fw-semibold">Upload Video Properti</label>
                             <p class="text-muted mb-2" style="font-size:12px;">Format: mp4, mov, avi. Maks 50MB.</p>
-                            <input type="file" class="form-control py-2" name="video_file" accept="video/mp4,video/quicktime,video/x-msvideo">
+                            <div id="video-new-preview" class="d-none d-flex align-items-center gap-2 mb-2 p-2 rounded" style="background:#eff6ff; border:1px solid #bfdbfe;">
+                                <i class="fas fa-file-video" style="color:#3b82f6;"></i>
+                                <span id="video-new-name" style="font-size:12px; color:#1d4ed8; flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;"></span>
+                                <button type="button" id="btn-clear-new-video" class="btn btn-sm btn-outline-secondary py-0 px-2" style="font-size:11px; flex-shrink:0;">
+                                    <i class="fas fa-times me-1"></i>Batal
+                                </button>
+                            </div>
+                            <input type="file" class="form-control py-2" name="video_file" id="video_file_input" accept="video/mp4,video/quicktime,video/x-msvideo">
                         </div>
                     </div>
 
@@ -526,13 +564,68 @@
 @endif
 
 {{-- Icon Picker Panel --}}
-<div id="gip" style="display:none;">
+<div id="gip">
     <input type="text" id="gip-search" placeholder="Cari ikon..." autocomplete="off">
     <div id="gip-grid"></div>
 </div>
 
+<script src="https://cdnjs.cloudflare.com/ajax/libs/quill/1.3.7/quill.min.js"></script>
 <script>
 document.addEventListener('DOMContentLoaded', function() {
+    // ---- Quill WYSIWYG for Description ----
+    const quill = new Quill('#quill-description', {
+        theme: 'snow',
+        placeholder: 'Tulis deskripsi properti... (Enter untuk baris baru, emoji didukung 🏠)',
+        modules: {
+            toolbar: [
+                ['bold', 'italic', 'underline'],
+                [{ 'list': 'ordered' }, { 'list': 'bullet' }],
+                [{ 'align': [] }],
+                ['clean']
+            ]
+        }
+    });
+    const descInput = document.getElementById('description-input');
+    const rawDesc = descInput.value;
+    if (rawDesc) {
+        const isHtml = /<[a-z][\s\S]*>/i.test(rawDesc);
+        if (isHtml) {
+            quill.clipboard.dangerouslyPasteHTML(rawDesc);
+        } else {
+            quill.clipboard.dangerouslyPasteHTML(rawDesc.split('\n').map(l => `<p>${l || '<br>'}</p>`).join(''));
+        }
+    }
+    descInput.closest('form').addEventListener('submit', function() {
+        descInput.value = quill.root.innerHTML === '<p><br></p>' ? '' : quill.root.innerHTML;
+    });
+
+    // ---- Icon image upload handlers (event delegation) ----
+    document.body.addEventListener('change', function(e) {
+        const inp = e.target.closest('.extra-icon-img-input');
+        if (!inp) return;
+        const zone = inp.closest('.extra-icon-upload-zone');
+        const preview = zone.querySelector('.extra-icon-newpreview');
+        if (inp.files && inp.files[0]) {
+            const file = inp.files[0];
+            const reader = new FileReader();
+            reader.onload = function(ev) {
+                zone.querySelector('.extra-icon-newpreview-thumb').src = ev.target.result;
+                zone.querySelector('.extra-icon-newpreview-name').textContent = file.name;
+                preview.style.display = 'flex';
+            };
+            reader.readAsDataURL(file);
+        } else {
+            preview.style.display = 'none';
+        }
+    });
+    document.body.addEventListener('click', function(e) {
+        if (e.target.closest('.btn-clear-icon-new')) {
+            const zone = e.target.closest('.extra-icon-upload-zone');
+            zone.querySelector('.extra-icon-img-input').value = '';
+            zone.querySelector('.extra-icon-newpreview').style.display = 'none';
+        }
+    });
+
     // Wizard navigation
     const sidebarItems = document.querySelectorAll('#wizard-sidebar li');
     const stepContents = document.querySelectorAll('.wizard-step');
@@ -624,18 +717,27 @@ document.addEventListener('DOMContentLoaded', function() {
         const div = document.createElement('div');
         div.className = 'facility-row dynamic-row';
         div.innerHTML = `
-            <div class="row g-2 align-items-center">
+            <div class="row g-2 align-items-start">
                 <div class="col-md-4">
                     <label class="form-label mb-1" style="font-size:12px;">Nama Fasilitas</label>
                     <input type="text" class="form-control py-2" name="facility_names[]" value="${name||''}" placeholder="Contoh: Kolam Renang">
                 </div>
                 <div class="col-md-3">
                     <label class="form-label mb-1" style="font-size:12px;">Ikon</label>
-                    <button type="button" class="btn icon-picker-btn">
+                    <button type="button" class="btn icon-picker-btn" onclick="gipOpen(this)">
                         <i class="${ic}"></i>
                         <span class="ip-label">${ic}</span>
                     </button>
                     <input type="hidden" name="facility_icons[]" value="${ic}" class="icon-picker-val">
+                    <div class="extra-icon-upload-zone">
+                        <div class="extra-icon-upload-label">Upload icon gambar (opsional):</div>
+                        <div class="extra-icon-newpreview">
+                            <img src="" alt="" class="extra-icon-newpreview-thumb">
+                            <span class="extra-icon-newpreview-name"></span>
+                            <button type="button" class="btn p-0 btn-clear-icon-new" style="font-size:11px;color:#6b7280;flex-shrink:0;"><i class="fas fa-times"></i></button>
+                        </div>
+                        <input type="file" name="facility_icon_images[]" accept="image/jpeg,image/png,image/webp,image/gif" class="extra-icon-img-input form-control form-control-sm" style="font-size:11px;padding:2px 6px;">
+                    </div>
                 </div>
                 <div class="col-md-3">
                     <label class="form-label mb-1" style="font-size:12px;">Gambar (opsional)</label>
@@ -645,7 +747,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     <div class="dim-feedback" style="font-size:11px;margin-top:1px;"></div>
                     <input type="hidden" name="facility_existing_imgs[]" value="${imgPath||''}">
                 </div>
-                <div class="col-md-2 d-flex align-items-end pb-1">
+                <div class="col-md-2 d-flex align-items-start pt-4">
                     <button type="button" class="btn btn-remove-row px-3 btn-delete w-100"><i class="fas fa-trash"></i></button>
                 </div>
             </div>`;
@@ -657,20 +759,29 @@ document.addEventListener('DOMContentLoaded', function() {
         const div = document.createElement('div');
         div.className = 'facility-row dynamic-row';
         div.innerHTML = `
-            <div class="row g-2 align-items-center">
+            <div class="row g-2 align-items-start">
                 <div class="col-md-5">
                     <label class="form-label mb-1" style="font-size:12px;">Nama Fitur</label>
                     <input type="text" class="form-control py-2" name="extra_names[]" value="${name||''}" placeholder="Contoh: Smart Home System">
                 </div>
                 <div class="col-md-5">
                     <label class="form-label mb-1" style="font-size:12px;">Ikon</label>
-                    <button type="button" class="btn icon-picker-btn">
+                    <button type="button" class="btn icon-picker-btn" onclick="gipOpen(this)">
                         <i class="${ic}"></i>
                         <span class="ip-label">${ic}</span>
                     </button>
                     <input type="hidden" name="extra_icons[]" value="${ic}" class="icon-picker-val">
+                    <div class="extra-icon-upload-zone">
+                        <div class="extra-icon-upload-label">Upload icon gambar (opsional):</div>
+                        <div class="extra-icon-newpreview">
+                            <img src="" alt="" class="extra-icon-newpreview-thumb">
+                            <span class="extra-icon-newpreview-name"></span>
+                            <button type="button" class="btn p-0 btn-clear-icon-new" style="font-size:11px; color:#6b7280; flex-shrink:0;"><i class="fas fa-times"></i></button>
+                        </div>
+                        <input type="file" name="extra_icon_images[]" accept="image/jpeg,image/png,image/webp,image/gif" class="extra-icon-img-input form-control form-control-sm" style="font-size:11px; padding:2px 6px;">
+                    </div>
                 </div>
-                <div class="col-md-2 d-flex align-items-end pb-1">
+                <div class="col-md-2 d-flex align-items-start pt-4">
                     <button type="button" class="btn btn-remove-row px-3 btn-delete w-100"><i class="fas fa-trash"></i></button>
                 </div>
             </div>`;
@@ -698,6 +809,31 @@ document.addEventListener('DOMContentLoaded', function() {
     document.getElementById('btn-add-extra').addEventListener('click', () => { document.getElementById('container-extra').appendChild(makeExtraRow()); });
     document.getElementById('btn-add-nearby').addEventListener('click', () => { document.getElementById('container-nearby').appendChild(makeNearbyRow()); });
     document.getElementById('btn-add-spesifikasi').addEventListener('click', () => { document.getElementById('container-spesifikasi').appendChild(makeSpecRow()); });
+
+    // Video file preview + clear
+    const videoFileInput = document.getElementById('video_file_input');
+    const btnClearNew    = document.getElementById('btn-clear-new-video');
+    const newPreview     = document.getElementById('video-new-preview');
+    const newName        = document.getElementById('video-new-name');
+    if (videoFileInput) {
+        videoFileInput.addEventListener('change', function() {
+            if (this.files && this.files[0]) {
+                newName.textContent = this.files[0].name;
+                newPreview.classList.remove('d-none');
+                newPreview.classList.add('d-flex');
+            } else {
+                newPreview.classList.add('d-none');
+                newPreview.classList.remove('d-flex');
+            }
+        });
+    }
+    if (btnClearNew) {
+        btnClearNew.addEventListener('click', function() {
+            videoFileInput.value = '';
+            newPreview.classList.add('d-none');
+            newPreview.classList.remove('d-flex');
+        });
+    }
 
     // Delete row
     document.body.addEventListener('click', function(e) {
@@ -739,34 +875,36 @@ document.addEventListener('DOMContentLoaded', function() {
         {cls:'fas fa-recycle',name:'Daur Ulang'},{cls:'fas fa-phone',name:'Telepon'},
         {cls:'fas fa-gas-pump',name:'Gas'},{cls:'fas fa-hot-tub',name:'Jacuzzi'},
         {cls:'fas fa-elevator',name:'Lift'},{cls:'fas fa-trash-alt',name:'Sampah'},
+        {cls:'fas fa-children',name:'Playground'},{cls:'fas fa-bridge-water',name:'Riverwalk'},
+        {cls:'fas fa-chess-rook',name:'Club House'},
     ];
 
     const gipEl = document.getElementById('gip');
     let gipTarget = null;
 
-    function gipRender(q) {
+    window.gipRender = function(q) {
         const grid = document.getElementById('gip-grid');
         const f = q ? GIP_ICONS.filter(ic => ic.name.toLowerCase().includes(q) || ic.cls.includes(q)) : GIP_ICONS;
         grid.innerHTML = f.map(ic => `<div class="gip-item" data-cls="${ic.cls}"><i class="${ic.cls}"></i><span class="gip-name">${ic.name}</span></div>`).join('');
-    }
+    };
 
-    function gipOpen(btn) {
+    window.gipOpen = function(btn) {
         gipTarget = btn;
         const r = btn.getBoundingClientRect();
         gipEl.style.display = 'flex';
         const panH = 340;
-        let top = r.bottom + window.scrollY + 4;
-        if (window.innerHeight - r.bottom < panH) top = r.top + window.scrollY - panH - 4;
-        let left = r.left + window.scrollX;
+        let top = r.bottom + 4;
+        if (window.innerHeight - r.bottom < panH) top = r.top - panH - 4;
+        let left = r.left;
         if (left + 300 > window.innerWidth) left = window.innerWidth - 310;
         gipEl.style.top  = top + 'px';
         gipEl.style.left = left + 'px';
         document.getElementById('gip-search').value = '';
         gipRender('');
         document.getElementById('gip-search').focus();
-    }
+    };
 
-    function gipClose() { gipEl.style.display = 'none'; gipTarget = null; }
+    window.gipClose = function() { gipEl.style.display = 'none'; gipTarget = null; };
 
     document.getElementById('gip-search').addEventListener('input', function() { gipRender(this.value.toLowerCase()); });
 
@@ -782,9 +920,8 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 
     document.addEventListener('click', function(e) {
-        const btn = e.target.closest('.icon-picker-btn');
-        if (btn) { gipOpen(btn); return; }
-        if (gipEl && gipEl.style.display !== 'none' && !gipEl.contains(e.target)) gipClose();
+        if (e.target.closest('.icon-picker-btn')) return;
+        if (gipEl && gipEl.style.display === 'flex' && !gipEl.contains(e.target)) gipClose();
     });
 
     // Dimension checker helper
@@ -856,7 +993,7 @@ document.addEventListener('DOMContentLoaded', function() {
         row.className = 'row mb-3 dynamic-row border-bottom pb-3 align-items-center';
         row.innerHTML = `
             <div class="col-md-2"><div class="border rounded bg-light d-flex align-items-center justify-content-center" style="width:80px;height:80px;overflow:hidden;"><i class="fas fa-camera text-muted gallery-icon"></i><img src="" class="img-cover d-none gallery-preview" style="width:100%;height:100%;object-fit:cover;"></div></div>
-            <div class="col-md-4"><input type="file" name="interior_images[]" class="form-control-file gallery-input" data-req-w="4096" data-req-h="2298" accept="image/*"><div style="font-size:11px;color:#777;margin-top:3px;"><i class="fas fa-ruler-combined me-1" style="color:#3065A3;"></i><strong>4096 × 2298</strong> px</div><div class="dim-feedback" style="font-size:11px;margin-top:1px;"></div></div>
+            <div class="col-md-4"><input type="file" name="interior_images[]" class="form-control-file gallery-input" accept="image/*"><div style="font-size:11px;color:#777;margin-top:3px;"><i class="fas fa-image me-1" style="color:#3065A3;"></i>JPG, PNG, WebP &nbsp;|&nbsp; Maks 10MB</div><div class="dim-feedback" style="font-size:11px;margin-top:1px;"></div></div>
             <div class="col-md-4"><input type="text" class="form-control" name="interior_labels[]" placeholder="Nama area interior (cth: Ruang Tamu)"></div>
             <div class="col-md-2"><button type="button" class="btn btn-danger btn-sm btn-delete"><i class="fas fa-trash"></i></button></div>`;
         document.getElementById('container-interior-gallery').appendChild(row);

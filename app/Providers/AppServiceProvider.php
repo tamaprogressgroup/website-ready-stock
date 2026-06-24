@@ -3,6 +3,7 @@
 namespace App\Providers;
 
 use App\Http\ViewComposers\NavbarComposer;
+use Illuminate\Pagination\Paginator;
 use Illuminate\Support\Facades\View;
 use Illuminate\Support\ServiceProvider;
 
@@ -13,5 +14,6 @@ class AppServiceProvider extends ServiceProvider
     public function boot(): void
     {
         View::composer('front.layout.navbar', NavbarComposer::class);
+        Paginator::useBootstrapFive();
     }
 }

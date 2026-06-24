@@ -172,27 +172,31 @@ class PropertyController extends Controller
             'building_area'           => 'nullable|numeric|min:0',
             'spec_keys'               => 'nullable|array',
             'spec_values'             => 'nullable|array',
-            'facility_names'          => 'nullable|array',
-            'facility_icons'          => 'nullable|array',
-            'facility_images'         => 'nullable|array',
-            'facility_images.*'       => 'nullable|image|mimes:jpeg,png,jpg,webp|max:10240|dimensions:width=4096,height=2503',
-            'facility_existing_imgs'  => 'nullable|array',
-            'nearby_names'            => 'nullable|array',
-            'nearby_names.*'          => 'nullable|string|max:255',
-            'extra_icons'             => 'nullable|array',
+            'facility_names'             => 'nullable|array',
+            'facility_icons'             => 'nullable|array',
+            'facility_images'            => 'nullable|array',
+            'facility_images.*'          => 'nullable|image|mimes:jpeg,png,jpg,webp|max:10240|dimensions:width=4096,height=2503',
+            'facility_existing_imgs'     => 'nullable|array',
+            'facility_icon_images'       => 'nullable|array',
+            'facility_icon_images.*'     => 'nullable|image|mimes:jpeg,png,jpg,webp|max:2048',
+            'nearby_names'               => 'nullable|array',
+            'nearby_names.*'             => 'nullable|string|max:255',
+            'extra_icons'                => 'nullable|array',
             'extra_names'             => 'nullable|array',
             'extra_names.*'           => 'nullable|string|max:255',
             'no_hp'                   => 'nullable|string|max:20',
             'price'                   => 'required|string',
             'discount'                => 'nullable|string',
             'main_thumbnail'          => 'required|image|mimes:jpeg,png,jpg,webp|max:10240|dimensions:width=4096,height=2298',
-            'mini_thumbnail'          => 'required|image|mimes:jpeg,png,jpg,webp|max:10240|dimensions:width=4096,height=2414',
+            'mini_thumbnail'          => 'required|image|mimes:jpeg,png,jpg,webp|max:10240|dimensions:width=4096,height=2298',
             'interior_images'         => 'nullable|array',
-            'interior_images.*'       => 'image|mimes:jpeg,png,jpg,webp|max:10240|dimensions:width=4096,height=2298',
+            'interior_images.*'       => 'nullable|image|mimes:jpeg,png,jpg,webp|max:10240',
             'interior_labels'         => 'nullable|array',
             'url_360'                 => 'nullable|url|max:500',
             'url_youtube'             => 'nullable|url|max:500',
             'video_file'              => 'nullable|file|mimes:mp4,mov,avi|max:51200',
+            'extra_icon_images'       => 'nullable|array',
+            'extra_icon_images.*'     => 'nullable|image|mimes:jpeg,png,jpg,webp|max:2048',
             'meta_title'              => 'nullable|string|max:255',
             'meta_keyword'            => 'nullable|string|max:500',
             'meta_descriotion'        => 'nullable|string|max:500',
@@ -275,20 +279,27 @@ class PropertyController extends Controller
                 PropertySpecTrans::create(array_merge($specTrans, ['locale' => 'en']));
             }
 
-            $facilityFiles = $request->file('facility_images', []);
+            $facilityFiles     = $request->file('facility_images', []);
+            $facilityIconFiles = $request->file('facility_icon_images', []);
             foreach ($request->facility_names ?? [] as $i => $name) {
                 $name = trim($name);
                 if (!$name) continue;
-                $iconUrl   = trim($request->facility_icons[$i] ?? '');
-                $imagePath = null;
-                $imgFile   = $facilityFiles[$i] ?? null;
+                $iconUrl     = trim($request->facility_icons[$i] ?? '');
+                $imagePath   = null;
+                $iconImgPath = null;
+                $imgFile     = $facilityFiles[$i] ?? null;
                 if ($imgFile && $imgFile->isValid()) {
                     $imagePath = $imgFile->store('properties/facilities', 'public');
                 } elseif ($existing = trim($request->facility_existing_imgs[$i] ?? '')) {
                     $imagePath = $this->copyStorageFile($existing, 'properties/facilities');
                 }
+                $iconImgFile = $facilityIconFiles[$i] ?? null;
+                if ($iconImgFile && $iconImgFile->isValid()) {
+                    $iconImgPath = $iconImgFile->store('properties/icons', 'public');
+                }
                 $f = PropertyFacility::create([
                     'property_id' => $unit->property_id, 'icon_url' => $iconUrl ?: null,
+                    'icon_image' => $iconImgPath,
                     'image' => $imagePath, 'created_user_id' => $userId, 'created_datetime' => now(),
                 ]);
                 PropertyFacilityTrans::create(['facility_id' => $f->facility_id, 'locale' => 'id', 'name' => $name]);
@@ -307,8 +318,13 @@ class PropertyController extends Controller
                 $extraName = trim($extraName);
                 if (!$extraName) continue;
                 $iconUrl = trim($request->extra_icons[$i] ?? '');
+                $iconImagePath = null;
+                if ($request->hasFile("extra_icon_images.$i")) {
+                    $iconImagePath = $request->file("extra_icon_images.$i")->store('properties/icons', 'public');
+                }
                 $e = PropertyExtraFeature::create([
                     'property_id' => $unit->property_id, 'icon_url' => $iconUrl ?: null,
+                    'icon_image' => $iconImagePath,
                     'creaeted_user_id' => $userId, 'created_datetime' => now(),
                 ]);
                 PropertyExtraFeatureTrans::create(['property_exstra_fitur_id' => $e->property_exstra_fitur_id, 'locale' => 'id', 'name' => $extraName]);
@@ -443,28 +459,37 @@ class PropertyController extends Controller
             'building_area'           => 'nullable|numeric|min:0',
             'spec_keys'               => 'nullable|array',
             'spec_values'             => 'nullable|array',
-            'facility_names'          => 'nullable|array',
-            'facility_icons'          => 'nullable|array',
-            'facility_images'         => 'nullable|array',
-            'facility_images.*'       => 'nullable|image|mimes:jpeg,png,jpg,webp|max:2048',
-            'facility_existing_imgs'  => 'nullable|array',
-            'nearby_names'            => 'nullable|array',
-            'nearby_names.*'          => 'nullable|string|max:255',
-            'extra_icons'             => 'nullable|array',
+            'facility_names'                  => 'nullable|array',
+            'facility_icons'                  => 'nullable|array',
+            'facility_images'                 => 'nullable|array',
+            'facility_images.*'               => 'nullable|image|mimes:jpeg,png,jpg,webp|max:2048',
+            'facility_existing_imgs'          => 'nullable|array',
+            'facility_icon_images'            => 'nullable|array',
+            'facility_icon_images.*'          => 'nullable|image|mimes:jpeg,png,jpg,webp|max:2048',
+            'facility_icon_image_existings'   => 'nullable|array',
+            'delete_facility_icon_images'     => 'nullable|array',
+            'nearby_names'                    => 'nullable|array',
+            'nearby_names.*'                  => 'nullable|string|max:255',
+            'extra_icons'                     => 'nullable|array',
             'extra_names'             => 'nullable|array',
             'extra_names.*'           => 'nullable|string|max:255',
             'no_hp'                   => 'nullable|string|max:20',
             'price'                   => 'required|string',
             'discount'                => 'nullable|string',
             'main_thumbnail'          => 'nullable|image|mimes:jpeg,png,jpg,webp|max:10240|dimensions:width=4096,height=2298',
-            'mini_thumbnail'          => 'nullable|image|mimes:jpeg,png,jpg,webp|max:10240|dimensions:width=4096,height=2414',
+            'mini_thumbnail'          => 'nullable|image|mimes:jpeg,png,jpg,webp|max:10240|dimensions:width=4096,height=2298',
             'interior_images'         => 'nullable|array',
-            'interior_images.*'       => 'image|mimes:jpeg,png,jpg,webp|max:10240|dimensions:width=4096,height=2298',
+            'interior_images.*'       => 'nullable|image|mimes:jpeg,png,jpg,webp|max:10240',
             'interior_labels'         => 'nullable|array',
-            'delete_interior_ids'     => 'nullable|array',
-            'url_360'                 => 'nullable|url|max:500',
-            'url_youtube'             => 'nullable|url|max:500',
-            'video_file'              => 'nullable|file|mimes:mp4,mov,avi|max:51200',
+            'delete_interior_ids'          => 'nullable|array',
+            'url_360'                      => 'nullable|url|max:500',
+            'url_youtube'                  => 'nullable|url|max:500',
+            'video_file'                   => 'nullable|file|mimes:mp4,mov,avi|max:51200',
+            'delete_video'                 => 'nullable|boolean',
+            'extra_icon_images'            => 'nullable|array',
+            'extra_icon_images.*'          => 'nullable|image|mimes:jpeg,png,jpg,webp|max:2048',
+            'extra_icon_image_existings'   => 'nullable|array',
+            'delete_icon_images'           => 'nullable|array',
             'meta_title'              => 'nullable|string|max:255',
             'meta_keyword'            => 'nullable|string|max:500',
             'meta_descriotion'        => 'nullable|string|max:500',
@@ -557,24 +582,40 @@ class PropertyController extends Controller
                 }
             }
 
+            $keepFacIconImages = array_filter($request->facility_icon_image_existings ?? []);
             foreach ($unit->facilities as $fac) {
                 if ($fac->image) Storage::disk('public')->delete($fac->image);
+                if ($fac->icon_image && !in_array($fac->icon_image, $keepFacIconImages)) {
+                    Storage::disk('public')->delete($fac->icon_image);
+                }
                 $fac->translations()->delete(); $fac->delete();
             }
-            $facilityFiles = $request->file('facility_images', []);
+            $facilityFiles     = $request->file('facility_images', []);
+            $facilityIconFiles = $request->file('facility_icon_images', []);
             foreach ($request->facility_names ?? [] as $i => $name) {
                 $name = trim($name);
                 if (!$name) continue;
-                $iconUrl   = trim($request->facility_icons[$i] ?? '');
-                $imagePath = null;
-                $imgFile   = $facilityFiles[$i] ?? null;
+                $iconUrl     = trim($request->facility_icons[$i] ?? '');
+                $imagePath   = null;
+                $iconImgPath = null;
+                $imgFile     = $facilityFiles[$i] ?? null;
                 if ($imgFile && $imgFile->isValid()) {
                     $imagePath = $imgFile->store('properties/facilities', 'public');
                 } elseif ($existing = trim($request->facility_existing_imgs[$i] ?? '')) {
                     $imagePath = $this->copyStorageFile($existing, 'properties/facilities');
                 }
+                $existingIconImg = $request->facility_icon_image_existings[$i] ?? null;
+                $iconImgPath = $existingIconImg ?: null;
+                $iconImgFile = $facilityIconFiles[$i] ?? null;
+                if ($iconImgFile && $iconImgFile->isValid()) {
+                    if ($existingIconImg) Storage::disk('public')->delete($existingIconImg);
+                    $iconImgPath = $iconImgFile->store('properties/icons', 'public');
+                } elseif ($request->input("delete_facility_icon_images.$i") == '1') {
+                    $iconImgPath = null;
+                }
                 $f = PropertyFacility::create([
                     'property_id' => $unit->property_id, 'icon_url' => $iconUrl ?: null,
+                    'icon_image' => $iconImgPath,
                     'image' => $imagePath, 'created_user_id' => $userId, 'created_datetime' => now(),
                 ]);
                 PropertyFacilityTrans::create(['facility_id' => $f->facility_id, 'locale' => 'id', 'name' => $name]);
@@ -590,13 +631,29 @@ class PropertyController extends Controller
                 PropertyNearbyLocationTrans::create(['nearby_location_id' => $n->nearby_location_id, 'locale' => 'en', 'name' => $nearbyName]);
             }
 
-            foreach ($unit->extraFeatures as $ef) { $ef->translations()->delete(); $ef->delete(); }
+            $keepIconImages = array_filter($request->extra_icon_image_existings ?? []);
+            foreach ($unit->extraFeatures as $ef) {
+                if ($ef->icon_image && !in_array($ef->icon_image, $keepIconImages)) {
+                    Storage::disk('public')->delete($ef->icon_image);
+                }
+                $ef->translations()->delete();
+                $ef->delete();
+            }
             foreach ($request->extra_names ?? [] as $i => $extraName) {
                 $extraName = trim($extraName);
                 if (!$extraName) continue;
                 $iconUrl = trim($request->extra_icons[$i] ?? '');
+                $existingIconImg = $request->extra_icon_image_existings[$i] ?? null;
+                $iconImagePath = $existingIconImg ?: null;
+                if ($request->hasFile("extra_icon_images.$i")) {
+                    if ($existingIconImg) Storage::disk('public')->delete($existingIconImg);
+                    $iconImagePath = $request->file("extra_icon_images.$i")->store('properties/icons', 'public');
+                } elseif ($request->input("delete_icon_images.$i") == '1') {
+                    $iconImagePath = null;
+                }
                 $e = PropertyExtraFeature::create([
                     'property_id' => $unit->property_id, 'icon_url' => $iconUrl ?: null,
+                    'icon_image' => $iconImagePath,
                     'creaeted_user_id' => $userId, 'created_datetime' => now(),
                 ]);
                 PropertyExtraFeatureTrans::create(['property_exstra_fitur_id' => $e->property_exstra_fitur_id, 'locale' => 'id', 'name' => $extraName]);
@@ -615,23 +672,24 @@ class PropertyController extends Controller
             // PropertyMedia (video) — upsert existing record
             $mediaRecord = \App\Models\PropertyMedia::where('property_id', $unit->property_id)->first();
             $videoPath   = $mediaRecord?->filename;
+            if ($request->boolean('delete_video') && $videoPath) {
+                Storage::disk('public')->delete($videoPath);
+                $videoPath = null;
+            }
             if ($request->hasFile('video_file')) {
                 if ($videoPath) Storage::disk('public')->delete($videoPath);
                 $videoPath = $request->file('video_file')->store('properties/videos', 'public');
             }
-            $hasMediaData = $videoPath || $request->filled('url_360') || $request->filled('url_youtube');
-            if ($hasMediaData) {
-                \App\Models\PropertyMedia::updateOrCreate(
-                    ['property_id' => $unit->property_id],
-                    [
-                        'filename'         => $videoPath,
-                        'url_360'          => $request->url_360 ?: ($mediaRecord?->url_360),
-                        'url_youtube'      => $request->url_youtube ?: ($mediaRecord?->url_youtube),
-                        'updated_user_id'  => $userId,
-                        'updated_datetime' => now(),
-                    ]
-                );
-            }
+            \App\Models\PropertyMedia::updateOrCreate(
+                ['property_id' => $unit->property_id],
+                [
+                    'filename'         => $videoPath,
+                    'url_360'          => $request->url_360,
+                    'url_youtube'      => $request->url_youtube,
+                    'updated_user_id'  => $userId,
+                    'updated_datetime' => now(),
+                ]
+            );
 
             DB::commit();
             $this->flushCaches($unit->property_id);
@@ -721,6 +779,7 @@ class PropertyController extends Controller
             'facilities' => $unit->facilities->map(fn($f) => [
                 'name'       => $f->translations->where('locale', 'id')->first()?->name ?? '',
                 'icon_url'   => $f->icon_url ?? '',
+                'icon_image' => $f->icon_image ? Storage::disk('public')->url($f->icon_image) : null,
                 'image_url'  => $f->image ? Storage::disk('public')->url($f->image) : null,
                 'image_path' => $f->image ?? '',
             ]),
@@ -728,8 +787,9 @@ class PropertyController extends Controller
                 'name' => $n->translations->where('locale', 'id')->first()?->name ?? '',
             ]),
             'extras' => $unit->extraFeatures->map(fn($e) => [
-                'name'     => $e->translations->where('locale', 'id')->first()?->name ?? '',
-                'icon_url' => $e->icon_url ?? '',
+                'name'       => $e->translations->where('locale', 'id')->first()?->name ?? '',
+                'icon_url'   => $e->icon_url ?? '',
+                'icon_image' => $e->icon_image ? Storage::disk('public')->url($e->icon_image) : null,
             ]),
         ]);
     }

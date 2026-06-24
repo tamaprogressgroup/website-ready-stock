@@ -14,6 +14,7 @@ class PropertyExtraFeature extends Model
     protected $fillable = [
         'property_id',
         'icon_url',
+        'icon_image',
         'creaeted_user_id',
         'created_datetime',
         'updated_user_id',

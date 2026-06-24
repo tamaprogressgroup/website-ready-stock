@@ -6,10 +6,10 @@
 	<meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1.0, shrink-to-fit=no">
 	<title>{{ $property['meta_title'] ?? ($property['title'] ?? 'Detail Properti') . ' - Paradise Ready Stock' }}</title>
 	<meta name="keywords" content="{{ $property['meta_keyword'] ?? '' }}">
-	<meta name="description" content="{{ $property['meta_description'] ?? Str::limit($property['description'] ?? '', 160) }}">
+	<meta name="description" content="{{ $property['meta_description'] ?? Str::limit(strip_tags($property['description'] ?? ''), 160) }}">
 	<meta name="author" content="paradise.co.id">
 	<meta property="og:title" content="{{ $property['meta_title'] ?? $property['title'] ?? '' }}">
-	<meta property="og:description" content="{{ $property['meta_description'] ?? Str::limit($property['description'] ?? '', 160) }}">
+	<meta property="og:description" content="{{ $property['meta_description'] ?? Str::limit(strip_tags($property['description'] ?? ''), 160) }}">
 	<meta property="og:type" content="website">
 
 	<link id="googleFonts" href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
@@ -553,7 +553,7 @@
 					@if ($property['description'])
 					<div class="mb-4 pb-4 border-bottom border-color-grey-1">
 						<h4 class="poppins-semibold text-4 mb-3" style="font-size: 24px;" >Deskripsi</h4>
-						<p class="poppins-regular text-3" style="line-height: 20.4px; font-size:14px; ">{{ $property['description'] }}</p>
+						<div class="poppins-regular text-3" style="line-height: 1.7; font-size:14px;">{!! strip_tags($property['description']) === $property['description'] ? nl2br(e($property['description'])) : $property['description'] !!}</div>
 					</div>
 					@endif
 
@@ -564,7 +564,11 @@
 						<div class="d-flex flex-wrap gap-2">
 							@foreach ($property['extra_features'] as $ef)
 							<div class="extra-feature-item">
-								<i class="{{ $ef['icon'] }}"></i>
+								@if (!empty($ef['icon_image']))
+									<img src="{{ asset('storage/' . $ef['icon_image']) }}" style="width:20px; height:20px; object-fit:contain; flex-shrink:0;" alt="">
+								@else
+									<i class="{{ $ef['icon'] }}"></i>
+								@endif
 								<span class="poppins-semibold" style="font-size: 14px;" >{{ $ef['name'] }}</span>
 							</div>
 							@endforeach
@@ -617,9 +621,9 @@
 							@foreach ($property['facilities'] as $fac)
 							<div class="col-md-4 mb-3">
 								<div class="facility-icon-item">
-									@if (Str::startsWith($fac['icon'], ['fas ', 'fab ', 'far ', 'fal ', 'fad ']))
-										<i class="{{ $fac['icon'] }}"></i>
-									@elseif (Str::startsWith($fac['icon'], 'flaticon'))
+									@if (!empty($fac['icon_image']))
+										<img src="{{ asset('storage/' . $fac['icon_image']) }}" alt="{{ $fac['name'] }}" style="width:32px;height:32px;object-fit:contain;">
+									@elseif (Str::startsWith($fac['icon'] ?? '', ['fas ', 'fab ', 'far ', 'fal ', 'fad ', 'flaticon']))
 										<i class="{{ $fac['icon'] }}"></i>
 									@else
 										<i class="fas fa-check-circle"></i>

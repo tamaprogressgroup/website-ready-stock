@@ -13,6 +13,7 @@ class PropertyFacility extends Model
 
     protected $fillable = [
         'icon_url',
+        'icon_image',
         'property_id',
         'image',
         'created_user_id',

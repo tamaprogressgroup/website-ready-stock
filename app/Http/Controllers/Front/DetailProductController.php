@@ -140,9 +140,10 @@ class DetailProductController extends BaseFrontController
 
         // Facilities — key image_url, stripBaseUrl di resolveCache normalise host
         $facilities = $unit->facilities->map(fn($f) => [
-            'icon'      => $f->icon_url ?? 'fas fa-check',
-            'name'      => $f->translations->first()?->name ?? '-',
-            'image_url' => $f->image ? 'storage/' . $f->image : null,
+            'icon'       => $f->icon_url ?? 'fas fa-check',
+            'icon_image' => $f->icon_image ?? null,
+            'name'       => $f->translations->first()?->name ?? '-',
+            'image_url'  => $f->image ? 'storage/' . $f->image : null,
         ])->toArray();
 
         // Nearby locations
@@ -153,8 +154,9 @@ class DetailProductController extends BaseFrontController
         // Extra features
         $extraFeatures = $unit->relationLoaded('extraFeatures')
             ? $unit->extraFeatures->map(fn($e) => [
-                'icon' => $e->icon_url ?? 'fas fa-star',
-                'name' => $e->translations->first()?->name ?? '-',
+                'icon'       => $e->icon_url ?? 'fas fa-star',
+                'icon_image' => $e->icon_image ?? null,
+                'name'       => $e->translations->first()?->name ?? '-',
             ])->toArray()
             : [];
 
