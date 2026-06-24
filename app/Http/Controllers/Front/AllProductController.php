@@ -128,7 +128,7 @@ class AllProductController extends BaseFrontController
 
         $query = PropertyUnit::with([
             'translations'              => fn($q) => $q->where('locale', $lang),
-            'interiors'                 => fn($q) => $q->where('order', 1)->where('is_active', 1),
+            'interiors'                 => fn($q) => $q->whereIn('order', [1, 2])->where('is_active', 1),
             'kota',
             'provinsi',
             'township',

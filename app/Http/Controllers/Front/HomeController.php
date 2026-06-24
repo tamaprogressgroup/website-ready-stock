@@ -98,7 +98,7 @@ class HomeController extends BaseFrontController
         $recommendations = $this->resolveCache('recommendations', $this->lang, fn() =>
             PropertyUnit::with([
                 'translations'              => fn($q) => $q->where('locale', $this->lang),
-                'interiors'                 => fn($q) => $q->where('order', 1)->where('is_active', 1),
+                'interiors'                 => fn($q) => $q->whereIn('order', [1, 2])->where('is_active', 1),
                 'kota',
                 'provinsi',
                 'township',
@@ -114,7 +114,7 @@ class HomeController extends BaseFrontController
         $newProperties = $this->resolveCache('new_properties', $this->lang, fn() =>
             PropertyUnit::with([
                 'translations'              => fn($q) => $q->where('locale', $this->lang),
-                'interiors'                 => fn($q) => $q->where('order', 1)->where('is_active', 1),
+                'interiors'                 => fn($q) => $q->whereIn('order', [1, 2])->where('is_active', 1),
                 'kota',
                 'provinsi',
                 'township',
