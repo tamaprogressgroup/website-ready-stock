@@ -583,15 +583,29 @@ class PropertyController extends Controller
             }
 
             $keepFacIconImages = array_filter($request->facility_icon_image_existings ?? []);
+            $facilityFiles     = $request->file('facility_images', []);
+            $facilityIconFiles = $request->file('facility_icon_images', []);
+
+            // Kumpulkan path gambar yang dipertahankan (tidak di-replace oleh upload baru)
+            $keepFacImages = [];
+            foreach ($request->facility_names ?? [] as $i => $name) {
+                if (!trim($name)) continue;
+                $imgFile = $facilityFiles[$i] ?? null;
+                if (!($imgFile && $imgFile->isValid())) {
+                    $existing = trim($request->facility_existing_imgs[$i] ?? '');
+                    if ($existing) $keepFacImages[] = $existing;
+                }
+            }
+
             foreach ($unit->facilities as $fac) {
-                if ($fac->image) Storage::disk('public')->delete($fac->image);
+                if ($fac->image && !in_array($fac->image, $keepFacImages)) {
+                    Storage::disk('public')->delete($fac->image);
+                }
                 if ($fac->icon_image && !in_array($fac->icon_image, $keepFacIconImages)) {
                     Storage::disk('public')->delete($fac->icon_image);
                 }
                 $fac->translations()->delete(); $fac->delete();
             }
-            $facilityFiles     = $request->file('facility_images', []);
-            $facilityIconFiles = $request->file('facility_icon_images', []);
             foreach ($request->facility_names ?? [] as $i => $name) {
                 $name = trim($name);
                 if (!$name) continue;
@@ -602,7 +616,7 @@ class PropertyController extends Controller
                 if ($imgFile && $imgFile->isValid()) {
                     $imagePath = $imgFile->store('properties/facilities', 'public');
                 } elseif ($existing = trim($request->facility_existing_imgs[$i] ?? '')) {
-                    $imagePath = $this->copyStorageFile($existing, 'properties/facilities');
+                    $imagePath = $existing; // reuse path langsung, file tidak dihapus di atas
                 }
                 $existingIconImg = $request->facility_icon_image_existings[$i] ?? null;
                 $iconImgPath = $existingIconImg ?: null;

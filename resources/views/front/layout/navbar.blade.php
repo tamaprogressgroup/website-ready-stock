@@ -105,7 +105,7 @@ html.sticky-header-active #header .header-body {
 
                         <div class="header-nav-features header-nav-features-light header-nav-features-no-border order-1 order-lg-2 ms-4 d-flex align-items-center">
                             <div class="header-nav-feature header-nav-features-search d-inline-flex">
-                                <a href="#" class="header-nav-features-toggle text-decoration-none d-flex align-items-center" data-focus="headerSearch">
+                                <a href="{{ route('front.all-products') }}" class="header-nav-features-toggle text-decoration-none d-flex align-items-center">
                                     <i class="fas fa-search header-nav-top-icon custom-search-icon" style="font-size: 16px; margin-right: 8px;"></i>
                                     <span class="font-weight-bold custom-search-text poppins-semibold" style="font-size: 15px;">Search</span>
                                 </a>
