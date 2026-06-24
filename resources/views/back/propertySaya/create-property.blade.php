@@ -321,7 +321,9 @@
                                 </div>
                                 <div class="col-md-3">
                                     <label class="form-label mb-1" style="font-size:12px;">Gambar (opsional)</label>
-                                    <input type="file" class="form-control" name="facility_images[]" accept="image/*">
+                                    <input type="file" class="form-control fac-img-input" name="facility_images[]" data-req-w="4096" data-req-h="2503" accept="image/*">
+                                    <div style="font-size:11px; color:#777; margin-top:3px;"><i class="fas fa-ruler-combined me-1" style="color:#3065A3;"></i><strong>4096 × 2503</strong> px</div>
+                                    <div class="dim-feedback" style="font-size:11px; margin-top:1px;"></div>
                                     <input type="hidden" name="facility_existing_imgs[]" value="">
                                 </div>
                                 <div class="col-md-2 d-flex align-items-start pt-4">
