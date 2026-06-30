@@ -128,7 +128,8 @@ class AllProductController extends BaseFrontController
         );
 
         $townships     = Township::orderBy('township_name')->get();
-        $availableTags = Tag::orderBy('name')->pluck('name')->toArray();
+        $availableTags = Tag::whereHas('propertyUnits', fn($q) => $q->where('is_active', 1)->where('status_id', 1))
+            ->orderBy('name')->pluck('name')->toArray();
 
         $query = PropertyUnit::with([
             'translations'              => fn($q) => $q->where('locale', $lang),

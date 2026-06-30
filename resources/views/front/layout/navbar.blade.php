@@ -246,7 +246,7 @@ li.nav-dropdown:hover .nav-dd-panel {
                                         {{-- Rekomendasi Properti --}}
                                         <li style="display:flex;align-items:center;">
                                             <a class="nav-link font-weight-semibold custom-nav-link poppins-semibold"
-                                               href="{{ route('front.all-products') }}?tags=Diskon,Features{{ $navKeySuffix ? '&' . ltrim($navKeySuffix, '?') : '' }}"
+                                               href="{{ route('front.all-products') }}?tags=Features{{ $navKeySuffix ? '&' . ltrim($navKeySuffix, '?') : '' }}"
                                                style="padding: 10px 18px !important; margin: 0 3px;">
                                                Rekomendasi Properti
                                             </a>

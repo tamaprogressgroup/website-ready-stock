@@ -60,6 +60,21 @@ class LeadController extends BaseFrontController
 
         $this->submitToHubspot($lead, $request, $unit);
 
+        // Build WA redirect URL from property phone number
+        $waUrl = '';
+        $rawPhone = $unit?->no_hp ?? '';
+        if ($rawPhone) {
+            $waPhone   = ltrim($this->formatPhone($rawPhone), '+');
+            $propTitle = $unit?->translations->first()?->title
+                      ?? $unit?->translations->first()?->property_name
+                      ?? '';
+            $greeting  = trim(($request->salutation ? $request->salutation . ' ' : '') . $request->fullname);
+            $waText    = 'Halo, Saya ' . $greeting . ' ingin informasi lengkap tentang ' . $propTitle . ', Mohon kirimkan detailnya.';
+            $waUrl     = 'https://api.whatsapp.com/send/?phone=' . $waPhone
+                       . '&text=' . rawurlencode($waText)
+                       . '&type=phone_number&app_absent=0';
+        }
+
         // Build SEO thank-you URL: /{condition}/{type}/{kota}/{township}/{slug}/thankyou
         if ($unit?->slug) {
             $condSlug = Str::slug($unit->condition?->translations->first()?->condition_name ?? '');
@@ -68,11 +83,16 @@ class LeadController extends BaseFrontController
             $twnSlug  = Str::slug($unit->township?->township_name ?? '');
 
             if ($condSlug && $typeSlug && $kotaSlug && $twnSlug) {
-                return redirect("/{$condSlug}/{$typeSlug}/{$kotaSlug}/{$twnSlug}/{$unit->slug}/thankyou");
+                $thankyouUrl = "/{$condSlug}/{$typeSlug}/{$kotaSlug}/{$twnSlug}/{$unit->slug}/thankyou";
+                if ($waUrl) $thankyouUrl .= '?wa_url=' . urlencode($waUrl);
+                return redirect($thankyouUrl);
             }
         }
 
-        return redirect()->route('front.thankyou', ['property_id' => $request->property_id]);
+        return redirect()->route('front.thankyou', array_filter([
+            'property_id' => $request->property_id,
+            'wa_url'      => $waUrl ?: null,
+        ]));
     }
 
     /** SEO route: /{condition}/{type}/{kota}/{township}/{slug}/thankyou */
