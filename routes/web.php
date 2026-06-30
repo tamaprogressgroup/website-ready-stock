@@ -17,6 +17,7 @@ use App\Http\Controllers\Front\DetailProductController;
 use App\Http\Controllers\Front\HomeController;
 use App\Http\Controllers\Front\LeadController;
 use App\Http\Controllers\Front\RedisController;
+use App\Http\Controllers\Front\SitemapController;
 use Illuminate\Support\Facades\Route;
 
 // ── Auth (unauthenticated) ─────────────────────────────────────────────────
@@ -27,6 +28,7 @@ Route::get('/register',  [RegisterController::class, 'showRegister'])->name('bac
 Route::post('/register', [RegisterController::class, 'register'])->name('back.register.post');
 
 // ── Front — explicit paths (must be declared before wildcard routes) ───────
+Route::get('/sitemap.xml', [SitemapController::class, 'index'])->name('front.sitemap');
 Route::get('/',            [AllProductController::class,   'index'])->name('front.home');
 Route::get('/all-products',[AllProductController::class, 'index'])->name('front.all-products');
 Route::get('/detail-product/{id}', [DetailProductController::class, 'index'])->name('front.detail');
