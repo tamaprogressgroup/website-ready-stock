@@ -39,6 +39,44 @@
     .btn-dot.dropdown-toggle::after { display:none; }
     .section-subtitle { font-size:13px; color:#8c98a4; margin-bottom:20px; }
     .empty-state { text-align:center; padding:60px 20px; color:#adb5bd; }
+
+    /* Atur Urutan modal */
+    .order-item {
+        display:flex; align-items:center; gap:12px;
+        padding:10px 14px;
+        border:1px solid #e8edf5;
+        border-radius:10px;
+        background:#fff;
+        margin-bottom:8px;
+        cursor:default;
+        transition:box-shadow 0.15s, border-color 0.15s;
+        user-select:none;
+    }
+    .order-item:hover { border-color:#c5d3ec; }
+    .order-item.sortable-ghost  { opacity:.3; border:2px dashed #2b4c8a !important; background:#f0f5ff !important; }
+    .order-item.sortable-chosen { box-shadow:0 6px 20px rgba(43,76,138,0.18) !important; border-color:#2b4c8a; }
+    .order-item .item-handle {
+        color:#b8c3d6; font-size:17px; cursor:grab; flex-shrink:0;
+        padding:4px 6px; border-radius:6px;
+    }
+    .order-item .item-handle:active { cursor:grabbing; }
+    .order-item .item-handle:hover { color:#2b4c8a; background:#eaf1fb; }
+    .order-item .item-num {
+        min-width:30px; text-align:center;
+        font-size:12px; font-weight:700; color:#8c98a4; flex-shrink:0;
+    }
+    .order-item .item-thumb {
+        width:52px; height:40px; border-radius:6px; object-fit:cover; flex-shrink:0;
+    }
+    .order-item .item-thumb-placeholder {
+        width:52px; height:40px; border-radius:6px; background:#f0f4f8;
+        display:flex; align-items:center; justify-content:center;
+        color:#adb5bd; font-size:16px; flex-shrink:0;
+    }
+    .order-item .item-title {
+        flex:1; font-size:13px; font-weight:600; color:#1a1a1a;
+        white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+    }
 </style>
 
 <div class="container-fluid py-4" style="max-width:1200px;">
@@ -206,10 +244,21 @@
             @endif
         </div>
     @else
-        <div class="section-subtitle">
-            {{ $items->total() }} properti ditemukan &nbsp;|&nbsp; Halaman {{ $items->currentPage() }} dari {{ $items->lastPage() }}
+        <div class="d-flex align-items-center justify-content-between mb-3">
+            <span class="section-subtitle mb-0">
+                {{ $items->total() }} properti ditemukan &nbsp;|&nbsp; Halaman {{ $items->currentPage() }} dari {{ $items->lastPage() }}
+            </span>
+            @if($tab === 'tayang')
+            <button type="button" id="btn-atur-urutan"
+                    class="btn btn-sm fw-semibold"
+                    style="border-radius:8px; border:1px solid #2b4c8a; color:#2b4c8a; background:#fff; padding:6px 14px; font-size:13px;"
+                    data-bs-toggle="modal" data-bs-target="#orderModal">
+                <i class="fas fa-sort-amount-down me-1"></i> Atur Urutan
+            </button>
+            @endif
         </div>
 
+        <div id="property-list">
         @foreach($items as $item)
             @php
                 $trans   = $item->translations->first();
@@ -329,6 +378,7 @@
                 </div>
             </div>
         @endforeach
+        </div>{{-- #property-list --}}
 
         <div class="mt-3 d-flex justify-content-between align-items-center">
             @if($items->previousPageUrl())
@@ -401,6 +451,55 @@
     </div>
 </div>
 
+{{-- ===== Modal Atur Urutan (Tayang tab only) ===== --}}
+@if($tab === 'tayang')
+<div class="modal fade" id="orderModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable" style="max-width:560px;">
+        <div class="modal-content border-0" style="border-radius:16px; overflow:hidden; box-shadow:0 20px 60px rgba(0,0,0,0.15);">
+
+            <div class="modal-header border-0" style="background:#f4f7fc; padding:22px 24px 16px;">
+                <div>
+                    <h5 class="modal-title fw-bold mb-1" style="font-size:17px; color:#1a1a1a;">
+                        <i class="fas fa-sort-amount-down me-2 text-primary"></i>Atur Urutan Tayang
+                    </h5>
+                    <p class="mb-0" style="font-size:12px; color:#6c757d;">
+                        Seret properti untuk mengatur posisi tampil di halaman publik. Semua halaman dimuat sekaligus.
+                    </p>
+                </div>
+                <button type="button" class="btn-close ms-auto" data-bs-dismiss="modal"></button>
+            </div>
+
+            <div class="modal-body p-0" style="max-height:66vh; overflow-y:auto;">
+                {{-- Loading state --}}
+                <div id="order-loading" class="text-center py-5">
+                    <div class="spinner-border text-primary" style="width:2rem;height:2rem;"></div>
+                    <p class="mt-3 text-muted" style="font-size:13px;">Memuat daftar properti…</p>
+                </div>
+                {{-- Sortable list --}}
+                <div id="order-list" class="p-3" style="display:none; min-height:80px;"></div>
+            </div>
+
+            <div class="modal-footer border-0" style="padding:14px 20px; gap:10px; background:#fafbfc;">
+                <span id="order-changed-hint" class="text-muted me-auto" style="font-size:12px; display:none;">
+                    <i class="fas fa-circle text-warning me-1" style="font-size:8px;"></i>Ada perubahan yang belum disimpan
+                </span>
+                <button type="button" class="btn fw-semibold px-4"
+                        data-bs-dismiss="modal"
+                        style="border-radius:10px; border:1px solid #e0e0e0; color:#495057; background:#fff; font-size:14px; height:42px;">
+                    Batal
+                </button>
+                <button type="button" id="order-save-btn" class="btn btn-primary fw-semibold px-4"
+                        style="border-radius:10px; font-size:14px; height:42px;" disabled>
+                    <i class="fas fa-save me-1"></i> Simpan Urutan
+                    <span id="order-save-spinner" class="spinner-border spinner-border-sm ms-1 d-none"></span>
+                </button>
+            </div>
+
+        </div>
+    </div>
+</div>
+@endif
+
 <script>
 function openDeleteModal(actionUrl, propertyName) {
     document.getElementById('delete-property-name').textContent = propertyName;
@@ -409,4 +508,133 @@ function openDeleteModal(actionUrl, propertyName) {
     modal.show();
 }
 </script>
+
+@if($tab === 'tayang')
+<script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.3/Sortable.min.js"></script>
+<script>
+(function () {
+    var modal       = document.getElementById('orderModal');
+    var listEl      = document.getElementById('order-list');
+    var loadingEl   = document.getElementById('order-loading');
+    var saveBtn     = document.getElementById('order-save-btn');
+    var saveSpinner = document.getElementById('order-save-spinner');
+    var changedHint = document.getElementById('order-changed-hint');
+    var sortable    = null;
+    var changed     = false;
+    var loaded      = false;
+
+    // Load all tayang properties when modal opens
+    modal.addEventListener('show.bs.modal', function () {
+        if (loaded) return;
+        fetch('{{ route("customer.property.tayang-for-order") }}', {
+            headers: { 'Accept': 'application/json', 'X-CSRF-TOKEN': '{{ csrf_token() }}' }
+        })
+        .then(function (r) { return r.json(); })
+        .then(function (res) {
+            renderList(res.data);
+            loadingEl.style.display = 'none';
+            listEl.style.display    = 'block';
+            loaded = true;
+        })
+        .catch(function () {
+            loadingEl.innerHTML = '<p class="text-danger py-4 text-center"><i class="fas fa-exclamation-circle me-1"></i>Gagal memuat data. Coba tutup dan buka lagi.</p>';
+        });
+    });
+
+    function renderList(items) {
+        listEl.innerHTML = '';
+        items.forEach(function (item, idx) {
+            var row = document.createElement('div');
+            row.className    = 'order-item';
+            row.dataset.id   = item.id;
+            row.innerHTML =
+                '<i class="fas fa-grip-vertical item-handle"></i>' +
+                '<span class="item-num">#' + (idx + 1) + '</span>' +
+                (item.thumb
+                    ? '<img src="' + item.thumb + '" class="item-thumb" alt="">'
+                    : '<div class="item-thumb-placeholder"><i class="fas fa-image"></i></div>') +
+                '<span class="item-title" title="' + escHtml(item.title) + '">' + escHtml(item.title) + '</span>';
+            listEl.appendChild(row);
+        });
+
+        sortable = Sortable.create(listEl, {
+            animation  : 180,
+            handle     : '.item-handle',
+            ghostClass : 'sortable-ghost',
+            chosenClass: 'sortable-chosen',
+            onEnd: function () {
+                changed = true;
+                saveBtn.disabled = false;
+                changedHint.style.display = 'inline';
+                refreshNums();
+            }
+        });
+    }
+
+    function refreshNums() {
+        listEl.querySelectorAll('.order-item').forEach(function (el, i) {
+            el.querySelector('.item-num').textContent = '#' + (i + 1);
+        });
+    }
+
+    function escHtml(s) {
+        return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+    }
+
+    // Force-clean modal artifacts whenever the modal fully closes
+    modal.addEventListener('hidden.bs.modal', function () {
+        document.querySelectorAll('.modal-backdrop').forEach(function (el) { el.remove(); });
+        document.body.classList.remove('modal-open');
+        document.body.style.overflow    = '';
+        document.body.style.paddingRight = '';
+    });
+
+    saveBtn.addEventListener('click', function () {
+        if (!changed) return;
+        saveSpinner.classList.remove('d-none');
+        saveBtn.disabled = true;
+
+        var ids = Array.from(listEl.querySelectorAll('.order-item'))
+                       .map(function (el) { return parseInt(el.dataset.id, 10); });
+
+        fetch('{{ route("customer.property.reorder") }}', {
+            method : 'POST',
+            headers: {
+                'Content-Type' : 'application/json',
+                'X-CSRF-TOKEN' : '{{ csrf_token() }}',
+                'Accept'       : 'application/json',
+            },
+            body: JSON.stringify({ ordered_ids: ids }),
+        })
+        .then(function (r) { return r.json(); })
+        .then(function (data) {
+            if (data.success) {
+                changed = false;
+                changedHint.style.display = 'none';
+                var bsModal = bootstrap.Modal.getInstance(modal) || new bootstrap.Modal(modal);
+                bsModal.hide();
+                showBanner('Urutan properti berhasil disimpan!', 'success');
+            } else {
+                showBanner('Gagal menyimpan urutan, coba lagi.', 'danger');
+                saveBtn.disabled = false;
+            }
+        })
+        .catch(function () {
+            showBanner('Terjadi kesalahan jaringan.', 'danger');
+            saveBtn.disabled = false;
+        })
+        .finally(function () { saveSpinner.classList.add('d-none'); });
+    });
+
+    function showBanner(msg, type) {
+        var el = document.createElement('div');
+        el.className = 'alert alert-' + type + ' alert-dismissible fade show shadow-sm';
+        el.style.cssText = 'position:fixed;top:20px;right:20px;z-index:9999;min-width:260px;border-radius:10px;';
+        el.innerHTML = msg + '<button type="button" class="btn-close" data-bs-dismiss="alert"></button>';
+        document.body.appendChild(el);
+        setTimeout(function () { el.remove(); }, 4000);
+    }
+})();
+</script>
+@endif
 @endsection

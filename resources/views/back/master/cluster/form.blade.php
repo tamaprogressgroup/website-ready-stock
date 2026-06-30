@@ -44,21 +44,20 @@
                     {{-- Gambar Utama --}}
                     <div class="mb-4">
                         <label class="form-label fw-semibold" style="font-size:13px;">
-                            Gambar Utama {{ $item ? '<span class="text-muted fw-normal">(opsional, ganti jika perlu)</span>' : '<span class="text-danger">*</span>' }}
+                            Gambar Utama <span class="text-muted fw-normal">(opsional)</span>
                         </label>
                         <p class="text-muted mb-2" style="font-size:12px;"><i class="fas fa-ruler-combined me-1"></i>Dimensi wajib: <strong>720 × 450 piksel</strong></p>
                         @if($item && $item->image)
                             <div class="mb-2">
                                 <img src="{{ Storage::disk('public')->url($item->image) }}" alt="current"
                                      style="width:200px; height:125px; object-fit:cover; border-radius:8px; border:1px solid #eee;">
-                                <p class="text-muted mt-1" style="font-size:11px;">Gambar saat ini.</p>
+                                <p class="text-muted mt-1" style="font-size:11px;">Gambar saat ini. Pilih file baru untuk mengganti.</p>
                             </div>
                         @endif
                         <input type="file" name="image" id="image"
                                class="form-control @error('image') is-invalid @enderror"
                                style="border-radius:8px;" accept="image/*"
-                               onchange="previewImage(this, 'preview-image')"
-                               {{ $item ? '' : 'required' }}>
+                               onchange="previewImage(this, 'preview-image')">
                         @error('image')<div class="invalid-feedback">{{ $message }}</div>@enderror
                         <div id="preview-image" class="mt-2" style="display:none;">
                             <img src="" alt="preview" style="width:200px; height:125px; object-fit:cover; border-radius:8px; border:2px dashed #3065A3;">
@@ -69,21 +68,20 @@
                     {{-- Gambar Mobile --}}
                     <div class="mb-4">
                         <label class="form-label fw-semibold" style="font-size:13px;">
-                            Gambar Mobile {{ $item ? '<span class="text-muted fw-normal">(opsional, ganti jika perlu)</span>' : '<span class="text-danger">*</span>' }}
+                            Gambar Mobile <span class="text-muted fw-normal">(opsional)</span>
                         </label>
                         <p class="text-muted mb-2" style="font-size:12px;"><i class="fas fa-ruler-combined me-1"></i>Dimensi wajib: <strong>720 × 450 piksel</strong></p>
                         @if($item && $item->image_mobile)
                             <div class="mb-2">
                                 <img src="{{ Storage::disk('public')->url($item->image_mobile) }}" alt="current mobile"
                                      style="width:200px; height:125px; object-fit:cover; border-radius:8px; border:1px solid #eee;">
-                                <p class="text-muted mt-1" style="font-size:11px;">Gambar mobile saat ini.</p>
+                                <p class="text-muted mt-1" style="font-size:11px;">Gambar mobile saat ini. Pilih file baru untuk mengganti.</p>
                             </div>
                         @endif
                         <input type="file" name="image_mobile" id="image_mobile"
                                class="form-control @error('image_mobile') is-invalid @enderror"
                                style="border-radius:8px;" accept="image/*"
-                               onchange="previewImage(this, 'preview-image-mobile')"
-                               {{ $item ? '' : 'required' }}>
+                               onchange="previewImage(this, 'preview-image-mobile')">
                         @error('image_mobile')<div class="invalid-feedback">{{ $message }}</div>@enderror
                         <div id="preview-image-mobile" class="mt-2" style="display:none;">
                             <img src="" alt="preview mobile" style="width:200px; height:125px; object-fit:cover; border-radius:8px; border:2px dashed #3065A3;">

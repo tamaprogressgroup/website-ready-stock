@@ -9,6 +9,7 @@ use App\Models\PageSeo;
 use App\Models\PropertyCondition;
 use App\Models\PropertyType;
 use App\Models\PropertyUnit;
+use App\Models\Tag;
 use App\Models\Township;
 use App\Redis\GetRedis;
 use App\Services\EmbedKeyService;
@@ -126,12 +127,16 @@ class AllProductController extends BaseFrontController
                 ->first()?->toArray() ?? []
         );
 
+        $townships     = Township::orderBy('township_name')->get();
+        $availableTags = Tag::orderBy('name')->pluck('name')->toArray();
+
         $query = PropertyUnit::with([
             'translations'              => fn($q) => $q->where('locale', $lang),
-            'interiors'                 => fn($q) => $q->whereIn('order', [1, 2])->where('is_active', 1),
+            'interiors'                 => fn($q) => $q->where('order', 1)->where('is_active', 1),
             'kota',
             'provinsi',
             'township',
+            'cluster',
             'condition.translations'    => fn($q) => $q->where('locale', $lang),
             'propertyType.translations' => fn($q) => $q->where('locale', $lang),
             'tags'                      => fn($q) => $q->where('is_label', 1),
@@ -159,6 +164,9 @@ class AllProductController extends BaseFrontController
         if (!$townshipId && $request->filled('township')) {
             $query->where('township_id', $request->township);
         }
+        if (!$townshipId && $request->filled('twp')) {
+            $query->where('township_id', $request->twp);
+        }
 
         // Free-text search — title, name, description, kota, provinsi, township
         if ($request->filled('q')) {
@@ -185,8 +193,15 @@ class AllProductController extends BaseFrontController
         if ($request->filled('lt_max'))    { $query->where('land_area',     '<=', (int)$request->lt_max); }
         if ($request->filled('lb_min'))    { $query->where('building_area', '>=', (int)$request->lb_min); }
         if ($request->filled('lb_max'))    { $query->where('building_area', '<=', (int)$request->lb_max); }
-        // Tag / furnish filter
-        if ($request->filled('tag'))       { $query->whereHas('tags', fn($q) => $q->where('name', $request->tag)); }
+        // Multi-tag filter (comma-separated string)
+        if ($request->filled('tags')) {
+            $tagList = array_filter(array_map('trim', explode(',', $request->tags)));
+            if ($tagList) {
+                foreach ($tagList as $tagName) {
+                    $query->whereHas('tags', fn($q) => $q->where('name', $tagName));
+                }
+            }
+        }
 
         $sort = $request->input('sort', 'newest');
         match ($sort) {
@@ -194,7 +209,7 @@ class AllProductController extends BaseFrontController
             'price_desc' => $query->orderBy('price',         'desc'),
             'lt_desc'    => $query->orderBy('land_area',     'desc'),
             'lb_desc'    => $query->orderBy('building_area', 'desc'),
-            default      => $query->orderByDesc('created_datetime'),
+            default      => $query->orderByRaw('CASE WHEN display_order IS NULL THEN 1 ELSE 0 END, display_order ASC, created_datetime DESC'),
         };
 
         $page       = max(1, (int) $request->input('page', 1));
@@ -241,7 +256,8 @@ class AllProductController extends BaseFrontController
         return view('front.layout.readyStockAllProduct', compact(
             'propertyTypes', 'propertyConditions', 'banner',
             'properties', 'totalCount', 'page', 'totalPages', 'sort',
-            'urlSlugs', 'slugNames', 'browseBase', 'mapMarkers', 'keyData', 'pageSeo'
+            'urlSlugs', 'slugNames', 'browseBase', 'mapMarkers', 'keyData', 'pageSeo',
+            'townships', 'availableTags'
         ));
     }
 

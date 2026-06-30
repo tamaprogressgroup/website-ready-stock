@@ -43,6 +43,10 @@
     .btn-add-dynamic { background-color: #f8f9fa; border: 1px solid #ced4da; color: #212529; font-weight: 600; font-size: 13px; padding: 8px 16px; border-radius: 4px; }
     .btn-add-dynamic:hover { background-color: #e2e6ea; }
     .upload-box-cover { border: 2px dashed #0d6efd; background-color: #f4f8ff; border-radius: 8px; text-align: center; padding: 40px 20px; }
+    .interior-drag-handle { cursor: grab; color: #adb5bd; font-size: 16px; padding: 0 6px; display: flex; align-items: center; justify-content: center; }
+    .interior-drag-handle:active { cursor: grabbing; }
+    .sortable-ghost { opacity: 0.4; background: #e8f0fe !important; }
+    .sortable-chosen { box-shadow: 0 4px 12px rgba(48,101,163,0.18); }
     .wizard-step { animation: fadeIn 0.3s ease-in-out; }
     .facility-row { background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 8px; padding: 12px; margin-bottom: 10px; }
     .icon-preview { display:inline-flex; align-items:center; justify-content:center; width:32px; height:32px; background:#f3f4f6; border-radius:6px; font-size:16px; color:#374151; }
@@ -260,9 +264,14 @@
 
                     <div class="d-flex align-items-center justify-content-between mb-2">
                         <h5 class="fw-bold text-dark mb-0">Spesifikasi Detail <span class="text-muted fw-normal ms-2" style="font-size:13px;">(Opsional)</span></h5>
+                        @if($importableProperties->count())
+                        <button type="button" class="import-btn" id="btn-open-spec-import" style="font-size:12px; padding:6px 14px;">
+                            <i class="fas fa-file-import me-1"></i> Import Spesifikasi
+                        </button>
+                        @endif
                     </div>
                     <div id="container-spesifikasi">
-                        @php $oldSpecKeys = old('spec_keys', ['']); $oldSpecValues = old('spec_values', ['']); @endphp
+                        @php $oldSpecKeys = old('spec_keys', []); $oldSpecValues = old('spec_values', []); @endphp
                         @foreach($oldSpecKeys as $i => $k)
                         <div class="d-flex mb-2 dynamic-input-group dynamic-row gap-2">
                             <input type="text" class="form-control py-2 w-50" name="spec_keys[]" value="{{ $k }}" placeholder="Nama Spesifikasi">
@@ -428,9 +437,9 @@
 
                     <h5 class="fw-bold text-dark mb-4 border-bottom pb-2">Media & Foto Properti</h5>
                     <div class="row mb-4">
-                        <div class="col-md-6 mb-4">
+                        <div class="col-md-8 mb-4">
                             <label class="form-label fw-semibold">Main Thumbnail (Utama) <span class="badge-wajib">Wajib</span></label>
-                            <p class="text-muted mb-2" style="font-size:12px;">Muncul paling besar di hasil pencarian.</p>
+                            <p class="text-muted mb-2" style="font-size:12px;">Muncul sebagai gambar utama di hasil pencarian dan halaman detail.</p>
                             <label for="upload-main" class="w-100 cursor-pointer m-0">
                                 <div class="upload-box-cover py-4" id="preview-container-main">
                                     <div class="upload-placeholder">
@@ -445,29 +454,13 @@
                             <div class="mt-1 ps-1" style="font-size:11px; color:#777;"><i class="fas fa-ruler-combined me-1" style="color:#3065A3;"></i>Dimensi: <strong>4096 × 2298</strong> px &nbsp;|&nbsp; Maks 10MB</div>
                             <div id="dim-feedback-main" style="font-size:11px; margin-top:2px;"></div>
                         </div>
-                        <div class="col-md-6 mb-4">
-                            <label class="form-label fw-semibold">Mini Thumbnail <span class="badge-wajib">Wajib</span></label>
-                            <p class="text-muted mb-2" style="font-size:12px;">Preview kecil di halaman listing.</p>
-                            <label for="upload-mini" class="w-100 cursor-pointer m-0">
-                                <div class="upload-box-cover py-4 border-secondary" id="preview-container-mini" style="background-color:#fcfcfc; border-color:#6c757d !important;">
-                                    <div class="upload-placeholder">
-                                        <i class="fas fa-th fs-2 text-secondary mb-2"></i>
-                                        <h6 class="fw-bold text-dark mb-1">Upload Mini Photo</h6>
-                                        <span class="text-secondary fw-semibold" style="font-size:13px;">Klik untuk pilih file</span>
-                                    </div>
-                                    <img src="" class="img-fluid d-none rounded" style="max-height:200px;" id="img-preview-mini">
-                                </div>
-                            </label>
-                            <input type="file" id="upload-mini" name="mini_thumbnail" class="d-none preview-input" data-target="mini" data-req-w="4096" data-req-h="2298" accept="image/*">
-                            <div class="mt-1 ps-1" style="font-size:11px; color:#777;"><i class="fas fa-ruler-combined me-1" style="color:#3065A3;"></i>Dimensi: <strong>4096 × 2298</strong> px &nbsp;|&nbsp; Maks 10MB</div>
-                            <div id="dim-feedback-mini" style="font-size:11px; margin-top:2px;"></div>
-                        </div>
                     </div>
 
                     <div class="mb-4">
                         <label class="form-label fw-semibold">Foto Interior & Ruangan</label>
                         <div id="container-interior-gallery">
                             <div class="row mb-3 dynamic-row border-bottom pb-3 align-items-center">
+                                <div class="col-auto interior-drag-handle"><i class="fas fa-grip-vertical"></i></div>
                                 <div class="col-md-2">
                                     <div class="border rounded bg-light d-flex align-items-center justify-content-center" style="width:80px;height:80px;overflow:hidden;">
                                         <i class="fas fa-camera text-muted gallery-icon"></i>
@@ -479,7 +472,7 @@
                                     <div style="font-size:11px; color:#777; margin-top:3px;"><i class="fas fa-image me-1" style="color:#3065A3;"></i>JPG, PNG, WebP &nbsp;|&nbsp; Maks 10MB</div>
                                     <div class="dim-feedback" style="font-size:11px; margin-top:1px;"></div>
                                 </div>
-                                <div class="col-md-4">
+                                <div class="col-md-3">
                                     <input type="text" class="form-control" name="interior_labels[]" placeholder="Nama area interior (cth: Ruang Tamu)">
                                 </div>
                                 <div class="col-md-2"><button type="button" class="btn btn-danger btn-sm btn-delete"><i class="fas fa-trash"></i></button></div>
@@ -530,6 +523,42 @@
     </div>
 </div>
 
+{{-- Spec-only Import Modal --}}
+@if($importableProperties->count())
+<div class="modal fade" id="specImportModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-scrollable">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title fw-bold"><i class="fas fa-file-import me-2 text-primary"></i>Import Spesifikasi dari Properti Lain</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p class="text-muted mb-3" style="font-size:13px;">Pilih properti sebagai sumber. Hanya data <strong>Spesifikasi Detail</strong> yang akan diimpor — fasilitas dan data lain tidak akan berubah.</p>
+                <input type="text" class="form-control mb-3" id="spec-import-search" placeholder="Cari judul properti...">
+                <div id="spec-import-list">
+                    @foreach($importableProperties as $ip)
+                    <div class="spec-import-item d-flex align-items-center gap-3 p-3 border rounded mb-2"
+                         data-id="{{ $ip['id'] }}" data-title="{{ $ip['title'] }}"
+                         style="cursor:pointer; transition:background 0.15s;"
+                         onmouseover="this.style.background='#f4f8ff'" onmouseout="this.style.background=''">
+                        <i class="fas fa-home text-primary fs-5"></i>
+                        <div class="flex-grow-1">
+                            <div class="fw-semibold" style="font-size:14px;">{{ $ip['title'] }}</div>
+                            <div class="text-muted" style="font-size:12px;">ID: {{ $ip['id'] }}</div>
+                        </div>
+                        <span class="badge bg-primary-subtle text-primary border border-primary-subtle" style="font-size:11px;">Pilih</span>
+                    </div>
+                    @endforeach
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
+            </div>
+        </div>
+    </div>
+</div>
+@endif
+
 {{-- Import Modal --}}
 @if($importableProperties->count())
 <div class="modal fade" id="importModal" tabindex="-1">
@@ -572,6 +601,7 @@
 </div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/quill/1.3.7/quill.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.3/Sortable.min.js"></script>
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     // ---- Quill WYSIWYG for Description ----
@@ -994,12 +1024,23 @@ document.addEventListener('DOMContentLoaded', function() {
         const row = document.createElement('div');
         row.className = 'row mb-3 dynamic-row border-bottom pb-3 align-items-center';
         row.innerHTML = `
+            <div class="col-auto interior-drag-handle"><i class="fas fa-grip-vertical"></i></div>
             <div class="col-md-2"><div class="border rounded bg-light d-flex align-items-center justify-content-center" style="width:80px;height:80px;overflow:hidden;"><i class="fas fa-camera text-muted gallery-icon"></i><img src="" class="img-cover d-none gallery-preview" style="width:100%;height:100%;object-fit:cover;"></div></div>
             <div class="col-md-4"><input type="file" name="interior_images[]" class="form-control-file gallery-input" accept="image/*"><div style="font-size:11px;color:#777;margin-top:3px;"><i class="fas fa-image me-1" style="color:#3065A3;"></i>JPG, PNG, WebP &nbsp;|&nbsp; Maks 10MB</div><div class="dim-feedback" style="font-size:11px;margin-top:1px;"></div></div>
-            <div class="col-md-4"><input type="text" class="form-control" name="interior_labels[]" placeholder="Nama area interior (cth: Ruang Tamu)"></div>
+            <div class="col-md-3"><input type="text" class="form-control" name="interior_labels[]" placeholder="Nama area interior (cth: Ruang Tamu)"></div>
             <div class="col-md-2"><button type="button" class="btn btn-danger btn-sm btn-delete"><i class="fas fa-trash"></i></button></div>`;
         document.getElementById('container-interior-gallery').appendChild(row);
     });
+
+    // Sortable for interior gallery (create)
+    if (typeof Sortable !== 'undefined') {
+        Sortable.create(document.getElementById('container-interior-gallery'), {
+            handle: '.interior-drag-handle',
+            animation: 150,
+            ghostClass: 'sortable-ghost',
+            chosenClass: 'sortable-chosen',
+        });
+    }
 
     // ---- Import Modal ----
     const btnOpenImport = document.getElementById('btn-open-import');
@@ -1030,30 +1071,60 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
+    // ---- Spec-only Import Modal ----
+    const btnOpenSpecImport = document.getElementById('btn-open-spec-import');
+    if (btnOpenSpecImport) {
+        const specImportModal = new bootstrap.Modal(document.getElementById('specImportModal'));
+        btnOpenSpecImport.addEventListener('click', () => specImportModal.show());
+
+        document.getElementById('spec-import-search').addEventListener('input', function () {
+            const q = this.value.toLowerCase();
+            document.querySelectorAll('#spec-import-list .spec-import-item').forEach(item => {
+                item.style.display = item.dataset.title.toLowerCase().includes(q) ? '' : 'none';
+            });
+        });
+
+        document.getElementById('spec-import-list').addEventListener('click', function (e) {
+            const item = e.target.closest('.spec-import-item');
+            if (!item) return;
+            const id = item.dataset.id;
+            fetch(`/customer/property/${id}/import-data`)
+                .then(r => r.json())
+                .then(data => {
+                    applySpecOnly(data);
+                    specImportModal.hide();
+                })
+                .catch(() => alert('Gagal mengambil data properti.'));
+        });
+    }
+
+    function applySpecOnly(data) {
+        const specCont = document.getElementById('container-spesifikasi');
+        specCont.innerHTML = '';
+        (data.specs || []).forEach(s => specCont.appendChild(makeSpecRow(s.key || '', s.value || '')));
+    }
+
     function applyImport(data) {
         // Replace specs
         const specCont = document.getElementById('container-spesifikasi');
         specCont.innerHTML = '';
         const specs = data.specs || [];
-        (specs.length ? specs : [{}]).forEach(s => specCont.appendChild(makeSpecRow(s.key||'', s.value||'')));
+        specs.forEach(s => specCont.appendChild(makeSpecRow(s.key||'', s.value||'')));
 
         // Replace facilities
         const facCont = document.getElementById('container-fasilitas');
         facCont.innerHTML = '';
-        const facs = data.facilities || [];
-        (facs.length ? facs : [{}]).forEach(f => facCont.appendChild(makeFacilityRow(f.name||'', f.icon_url||'', f.image_url||null, f.image_path||'')));
+        (data.facilities || []).forEach(f => facCont.appendChild(makeFacilityRow(f.name||'', f.icon_url||'', f.image_url||null, f.image_path||'')));
 
         // Replace extra features
         const extraCont = document.getElementById('container-extra');
         extraCont.innerHTML = '';
-        const extras = data.extras || [];
-        (extras.length ? extras : [{}]).forEach(e => extraCont.appendChild(makeExtraRow(e.name||'', e.icon_url||'')));
+        (data.extras || []).forEach(e => extraCont.appendChild(makeExtraRow(e.name||'', e.icon_url||'')));
 
         // Replace nearby
         const nearbyCont = document.getElementById('container-nearby');
         nearbyCont.innerHTML = '';
-        const nearby = data.nearby || [];
-        (nearby.length ? nearby : [{}]).forEach(n => nearbyCont.appendChild(makeNearbyRow(n.name||'')));
+        (data.nearby || []).forEach(n => nearbyCont.appendChild(makeNearbyRow(n.name||'')));
     }
 });
 </script>

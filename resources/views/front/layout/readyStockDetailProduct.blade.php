@@ -720,24 +720,28 @@
 								</a>
 							@else
 								<h4 class="poppins-semibold text-center mb-4 text-5" style="color: #1C5FA8;">Dapatkan Promo Sekarang</h4>
-								<form action="{{ route('front.lead.store') }}" method="POST">
+								<form action="{{ route('front.lead.store') }}" method="POST" id="lead-wa-form" novalidate>
 									@csrf
 									<input type="hidden" name="property_id" value="{{ $property['property_id'] }}">
 									<div class="mb-3">
-										<select name="salutation" class="form-select text-3 py-2" style="background-color: #f8f9fa; border: none; border-radius: 8px; color: #555;">
+										<select name="salutation" id="lead-salutation" class="form-select text-3 py-2" style="background-color: #f8f9fa; border: none; border-radius: 8px; color: #555;">
 											<option value="">Title</option>
 											<option value="Bapak">Bapak</option>
 											<option value="Ibu">Ibu</option>
 										</select>
+										<div class="lead-err" id="err-salutation" style="display:none; color:#dc3545; font-size:12px; margin-top:4px; padding-left:2px;">Silakan pilih title.</div>
 									</div>
 									<div class="mb-3">
-										<input type="text" name="fullname" class="form-control text-3 py-2" placeholder="Nama" style="background-color: #f8f9fa; border: none; border-radius: 8px;">
+										<input type="text" name="fullname" id="lead-fullname" class="form-control text-3 py-2" placeholder="Nama" style="background-color: #f8f9fa; border: none; border-radius: 8px;">
+										<div class="lead-err" id="err-fullname" style="display:none; color:#dc3545; font-size:12px; margin-top:4px; padding-left:2px;">Nama wajib diisi.</div>
 									</div>
 									<div class="mb-3">
-										<input name="phone_number" type="number" pattern="[\d\s\+\-\(\)]{6,20}" class="form-control text-3 py-2" placeholder="No. Telepon" style="background-color: #f8f9fa; border: none; border-radius: 8px;">
+										<input name="phone_number" type="number" id="lead-phone" pattern="[\d\s\+\-\(\)]{6,20}" class="form-control text-3 py-2" placeholder="No. Telepon" style="background-color: #f8f9fa; border: none; border-radius: 8px;">
+										<div class="lead-err" id="err-phone" style="display:none; color:#dc3545; font-size:12px; margin-top:4px; padding-left:2px;">No. Telepon wajib diisi.</div>
 									</div>
 									<div class="mb-4">
-										<input type="email" name="email" class="form-control text-3 py-2" placeholder="Email" style="background-color: #f8f9fa; border: none; border-radius: 8px;">
+										<input type="email" name="email" id="lead-email" class="form-control text-3 py-2" placeholder="Email" style="background-color: #f8f9fa; border: none; border-radius: 8px;">
+										<div class="lead-err" id="err-email" style="display:none; color:#dc3545; font-size:12px; margin-top:4px; padding-left:2px;">Email wajib diisi.</div>
 									</div>
 									<button type="submit"
 									   class="btn w-100 font-weight-bold py-2 text-color-light d-flex align-items-center justify-content-center"
@@ -745,6 +749,38 @@
 									   <i class="fab fa-whatsapp me-2 text-4"></i> WhatsApp
 									</button>
 								</form>
+								<script>
+								(function () {
+								    var form  = document.getElementById('lead-wa-form');
+								    if (!form) return;
+								    var fields = [
+								        { el: document.getElementById('lead-salutation'), err: document.getElementById('err-salutation'), isSelect: true },
+								        { el: document.getElementById('lead-fullname'),   err: document.getElementById('err-fullname') },
+								        { el: document.getElementById('lead-phone'),      err: document.getElementById('err-phone') },
+								        { el: document.getElementById('lead-email'),      err: document.getElementById('err-email') },
+								    ];
+								    function validate(field) {
+								        var val = field.el.value.trim();
+								        var ok  = val !== '';
+								        field.err.style.display  = ok ? 'none' : 'block';
+								        field.el.style.border    = ok ? '' : '1.5px solid #dc3545';
+								        field.el.style.backgroundColor = ok ? '' : '#fff5f5';
+								        return ok;
+								    }
+								    fields.forEach(function (f) {
+								        f.el.addEventListener('input',  function () { validate(f); });
+								        f.el.addEventListener('change', function () { validate(f); });
+								    });
+								    form.addEventListener('submit', function (e) {
+								        var allOk = fields.map(validate).every(Boolean);
+								        if (!allOk) {
+								            e.preventDefault();
+								            var first = fields.find(function (f) { return f.err.style.display === 'block'; });
+								            if (first) first.el.focus();
+								        }
+								    });
+								})();
+								</script>
 							@endif
 						</div>
 					</div>

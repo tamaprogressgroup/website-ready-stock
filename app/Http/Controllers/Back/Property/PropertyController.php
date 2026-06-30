@@ -92,7 +92,11 @@ class PropertyController extends Controller
             'township',
         ])
         ->where('status_id', $statusId)
-        ->orderByDesc('created_datetime')
+        ->when(
+            $tab === 'tayang',
+            fn($q) => $q->orderByRaw('CASE WHEN display_order IS NULL THEN 1 ELSE 0 END, display_order ASC, created_datetime DESC'),
+            fn($q) => $q->orderByDesc('created_datetime')
+        )
         ->paginate(10)
         ->withQueryString();
 
@@ -188,7 +192,6 @@ class PropertyController extends Controller
             'price'                   => 'required|string',
             'discount'                => 'nullable|string',
             'main_thumbnail'          => 'required|image|mimes:jpeg,png,jpg,webp|max:10240|dimensions:width=4096,height=2298',
-            'mini_thumbnail'          => 'required|image|mimes:jpeg,png,jpg,webp|max:10240|dimensions:width=4096,height=2298',
             'interior_images'         => 'nullable|array',
             'interior_images.*'       => 'nullable|image|mimes:jpeg,png,jpg,webp|max:10240',
             'interior_labels'         => 'nullable|array',
@@ -206,7 +209,6 @@ class PropertyController extends Controller
         $cleanDiscount = $request->filled('discount') ? (int) str_replace('.', '', $request->discount) : 0;
 
         $mainPath = $request->file('main_thumbnail')->store('properties/main', 'public');
-        $miniPath = $request->file('mini_thumbnail')->store('properties/mini', 'public');
 
         $galleryData = [];
         if ($request->hasFile('interior_images')) {
@@ -267,7 +269,6 @@ class PropertyController extends Controller
             PropertyUnitTrans::create(array_merge($transData, ['property_id' => $unit->property_id, 'locale' => 'en']));
 
             $this->createInterior($unit->property_id, $mainPath, 1, 'Main Thumbnail');
-            $this->createInterior($unit->property_id, $miniPath, 2, 'Mini Thumbnail');
             foreach ($galleryData as $idx => $g) {
                 $this->createInterior($unit->property_id, $g['path'], $idx + 3, $g['label']);
             }
@@ -477,7 +478,6 @@ class PropertyController extends Controller
             'price'                   => 'required|string',
             'discount'                => 'nullable|string',
             'main_thumbnail'          => 'nullable|image|mimes:jpeg,png,jpg,webp|max:10240|dimensions:width=4096,height=2298',
-            'mini_thumbnail'          => 'nullable|image|mimes:jpeg,png,jpg,webp|max:10240|dimensions:width=4096,height=2298',
             'interior_images'         => 'nullable|array',
             'interior_images.*'       => 'nullable|image|mimes:jpeg,png,jpg,webp|max:10240',
             'interior_labels'         => 'nullable|array',
@@ -519,9 +519,7 @@ class PropertyController extends Controller
                 'updated_user_id'  => $userId,
                 'updated_datetime' => now(),
             ];
-            if (empty($unit->slug)) {
-                $updateData['slug'] = $this->generateUniqueSlug($request->title, $unit->property_id);
-            }
+            $updateData['slug'] = $this->generateUniqueSlug($request->title, $unit->property_id);
             $unit->update($updateData);
 
             $transData = [
@@ -545,23 +543,20 @@ class PropertyController extends Controller
                     $this->createInterior($unit->property_id, $request->file('main_thumbnail')->store('properties/main', 'public'), 1, 'Main Thumbnail');
                 }
             }
-            if ($request->hasFile('mini_thumbnail')) {
-                $mini = $unit->interiors()->where('order', 2)->first();
-                if ($mini) {
-                    Storage::disk('public')->delete($mini->image);
-                    $mini->update(['image' => $request->file('mini_thumbnail')->store('properties/mini', 'public')]);
-                    foreach (['id','en'] as $loc) { $mini->translations()->updateOrCreate(['locale' => $loc], ['interior_name' => 'Mini Thumbnail', 'created_datetime' => now()]); }
-                } else {
-                    $this->createInterior($unit->property_id, $request->file('mini_thumbnail')->store('properties/mini', 'public'), 2, 'Mini Thumbnail');
-                }
-            }
-
             foreach ($request->delete_interior_ids ?? [] as $intId) {
                 $interior = PropertyUnitInterior::where('property_interior_id', $intId)->where('property_id', $unit->property_id)->first();
                 if ($interior) { Storage::disk('public')->delete($interior->image); $interior->translations()->delete(); $interior->delete(); }
             }
 
-            $maxOrder = $unit->interiors()->where('order', '>=', 3)->max('order') ?? 2;
+            // Update order of existing interior images
+            foreach ($request->interior_order ?? [] as $intId => $newOrder) {
+                PropertyUnitInterior::where('property_interior_id', $intId)
+                    ->where('property_id', $unit->property_id)
+                    ->where('order', '>=', 2)
+                    ->update(['order' => (int) $newOrder + 1]);
+            }
+
+            $maxOrder = $unit->interiors()->where('order', '>=', 2)->max('order') ?? 1;
             if ($request->hasFile('interior_images')) {
                 foreach ($request->file('interior_images') as $idx => $img) {
                     if ($img && $img->isValid()) {
@@ -806,6 +801,48 @@ class PropertyController extends Controller
                 'icon_image' => $e->icon_image ? Storage::disk('public')->url($e->icon_image) : null,
             ]),
         ]);
+    }
+
+    public function tayangForOrder()
+    {
+        $userId = Auth::guard('admin')->id();
+        $items = PropertyUnit::with([
+            'translations' => fn($q) => $q->where('locale', 'id'),
+            'interiors'    => fn($q) => $q->where('order', 1)->where('is_active', 1),
+        ])
+        ->where('created_user_id', $userId)
+        ->where('status_id', 1)
+        ->orderByRaw('CASE WHEN display_order IS NULL THEN 1 ELSE 0 END, display_order ASC, created_datetime DESC')
+        ->get()
+        ->map(fn($u) => [
+            'id'    => $u->property_id,
+            'title' => $u->translations->first()?->title ?? 'Properti #'.$u->property_id,
+            'thumb' => $u->interiors->first()?->image
+                        ? Storage::disk('public')->url($u->interiors->first()->image)
+                        : null,
+        ]);
+
+        return response()->json(['data' => $items]);
+    }
+
+    public function reorder(Request $request)
+    {
+        $request->validate([
+            'ordered_ids'   => 'required|array|min:1',
+            'ordered_ids.*' => 'integer',
+        ]);
+
+        $userId = Auth::guard('admin')->id();
+
+        foreach ($request->ordered_ids as $position => $propertyId) {
+            PropertyUnit::where('property_id', $propertyId)
+                ->where('created_user_id', $userId)
+                ->where('status_id', 1)
+                ->update(['display_order' => $position + 1]);
+        }
+
+        $this->flushCaches();
+        return response()->json(['success' => true]);
     }
 
     public function backfillSlugs()

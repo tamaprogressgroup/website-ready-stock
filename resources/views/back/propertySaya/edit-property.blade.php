@@ -39,6 +39,20 @@
     .gallery-card { background:#f8f9fa; border:1px solid #e0e0e0; border-radius:8px; padding:10px; position:relative; }
     .gallery-card img { width:100%; height:80px; object-fit:cover; border-radius:6px; }
     .gallery-card .del-btn { position:absolute; top:6px; right:6px; background:#dc3545; color:#fff; border:none; border-radius:4px; padding:2px 7px; font-size:11px; cursor:pointer; }
+    /* Interior sortable (existing) */
+    .interior-sort-list { display:flex; flex-direction:column; gap:8px; }
+    .interior-sort-item { display:flex; align-items:center; gap:12px; background:#f8f9fa; border:1px solid #e0e0e0; border-radius:8px; padding:8px 12px; transition:box-shadow 0.15s; }
+    .interior-sort-item.sortable-ghost { opacity:0.4; background:#e8f0fe !important; }
+    .interior-sort-item.sortable-chosen { box-shadow:0 4px 12px rgba(48,101,163,0.18); }
+    .interior-drag-handle { cursor:grab; color:#adb5bd; font-size:16px; flex-shrink:0; }
+    .interior-drag-handle:active { cursor:grabbing; }
+    .interior-sort-thumb { width:80px; height:60px; object-fit:cover; border-radius:6px; border:1px solid #dee2e6; flex-shrink:0; }
+    .interior-sort-name { flex:1; font-size:13px; color:#495057; font-weight:500; }
+    .interior-sort-badge { font-size:11px; background:#e9ecef; color:#6c757d; border-radius:12px; padding:2px 10px; flex-shrink:0; white-space:nowrap; }
+    /* New interior rows */
+    .interior-new-drag-handle { cursor:grab; color:#adb5bd; font-size:16px; display:flex; align-items:center; justify-content:center; }
+    .interior-new-drag-handle:active { cursor:grabbing; }
+    .sortable-ghost-new { opacity:0.4; background:#e8f0fe !important; }
     .facility-row { background:#f9fafb; border:1px solid #e5e7eb; border-radius:8px; padding:12px; margin-bottom:10px; }
     .icon-preview { display:inline-flex; align-items:center; justify-content:center; width:32px; height:32px; background:#f3f4f6; border-radius:6px; font-size:16px; color:#374151; }
     .fac-img-thumb { width:60px; height:60px; object-fit:cover; border-radius:6px; border:1px solid #dee2e6; }
@@ -87,8 +101,7 @@
     @php
         $trans     = $item->translations->where('locale', 'id')->first();
         $mainThumb = $item->interiors->where('order', 1)->first();
-        $miniThumb = $item->interiors->where('order', 2)->first();
-        $gallery   = $item->interiors->where('order', '>=', 3)->sortBy('order');
+        $gallery   = $item->interiors->where('order', '>=', 2)->sortBy('order');
         $specs     = $item->specs;
         $facilities = $item->facilities;
         $nearbyLocations = $item->nearbyLocations;
@@ -305,11 +318,6 @@
                         <button type="button" class="btn btn-remove-row px-3 btn-delete"><i class="fas fa-trash"></i></button>
                     </div>
                 @empty
-                    <div class="d-flex mb-2 dynamic-row gap-2">
-                        <input type="text" class="form-control py-2 w-50" name="spec_keys[]" placeholder="Nama">
-                        <input type="text" class="form-control py-2 w-50" name="spec_values[]" placeholder="Nilai">
-                        <button type="button" class="btn btn-remove-row px-3 btn-delete"><i class="fas fa-trash"></i></button>
-                    </div>
                 @endforelse
             </div>
             <button type="button" class="btn btn-add-dynamic mt-2 mb-4" id="btn-add-spesifikasi"><i class="fas fa-plus me-1"></i> Tambah Spesifikasi</button>
@@ -564,7 +572,7 @@
             <div class="section-heading"><i class="fas fa-images me-2 text-primary"></i>Media & Foto Properti</div>
 
             <div class="row mb-4">
-                <div class="col-md-6 mb-4">
+                <div class="col-md-8 mb-4">
                     <label class="form-label fw-semibold" style="font-size:13px;">Main Thumbnail</label>
                     @if($mainThumb)
                         <div class="mb-2">
@@ -577,37 +585,25 @@
                     <div class="mt-1" style="font-size:11px; color:#777;"><i class="fas fa-ruler-combined me-1" style="color:#3065A3;"></i>Dimensi: <strong>4096 × 2298</strong> px &nbsp;|&nbsp; Maks 10MB</div>
                     <div class="dim-feedback" style="font-size:11px; margin-top:2px;"></div>
                 </div>
-                <div class="col-md-6 mb-4">
-                    <label class="form-label fw-semibold" style="font-size:13px;">Mini Thumbnail</label>
-                    @if($miniThumb)
-                        <div class="mb-2">
-                            <img src="{{ Storage::url($miniThumb->image) }}" alt="mini" class="img-thumb-current">
-                            <p class="text-muted mt-1" style="font-size:11px;">Gambar saat ini. Pilih file baru untuk mengganti.</p>
-                        </div>
-                    @endif
-                    <input type="file" name="mini_thumbnail" class="form-control @error('mini_thumbnail') is-invalid @enderror" data-req-w="4096" data-req-h="2298" accept="image/*">
-                    @error('mini_thumbnail')<div class="invalid-feedback">{{ $message }}</div>@enderror
-                    <div class="mt-1" style="font-size:11px; color:#777;"><i class="fas fa-ruler-combined me-1" style="color:#3065A3;"></i>Dimensi: <strong>4096 × 2298</strong> px &nbsp;|&nbsp; Maks 10MB</div>
-                    <div class="dim-feedback" style="font-size:11px; margin-top:2px;"></div>
-                </div>
             </div>
 
             @if($gallery->isNotEmpty())
             <div class="mb-4">
                 <label class="form-label fw-semibold" style="font-size:13px;">Foto Interior Saat Ini</label>
-                <p class="text-muted mb-2" style="font-size:12px;">Centang untuk menghapus foto.</p>
-                <div class="row g-3">
+                <p class="text-muted mb-2" style="font-size:12px;">Drag <i class="fas fa-grip-vertical text-secondary"></i> untuk mengubah urutan. Centang <strong class="text-danger">Hapus</strong> untuk menghapus foto.</p>
+                <div class="interior-sort-list" id="existing-interior-sort">
                     @foreach($gallery as $img)
                         @php $imgTrans = $img->translations->where('locale', 'id')->first(); @endphp
-                        <div class="col-md-3 col-6">
-                            <div class="gallery-card">
-                                <img src="{{ Storage::url($img->image) }}" alt="gallery">
-                                <p class="text-muted mt-1 mb-1" style="font-size:11px;">{{ $imgTrans?->interior_name ?? '-' }}</p>
-                                <div class="form-check">
-                                    <input class="form-check-input" type="checkbox" name="delete_interior_ids[]"
-                                        value="{{ $img->property_interior_id }}" id="del_{{ $img->property_interior_id }}">
-                                    <label class="form-check-label text-danger" for="del_{{ $img->property_interior_id }}" style="font-size:11px;">Hapus</label>
-                                </div>
+                        <div class="interior-sort-item" data-id="{{ $img->property_interior_id }}">
+                            <span class="interior-drag-handle"><i class="fas fa-grip-vertical"></i></span>
+                            <img src="{{ Storage::url($img->image) }}" alt="gallery" class="interior-sort-thumb">
+                            <span class="interior-sort-name">{{ $imgTrans?->interior_name ?? '-' }}</span>
+                            <span class="interior-sort-badge"><i class="fas fa-arrows-alt-v me-1"></i>Urutan: <strong class="order-num">{{ $loop->iteration }}</strong></span>
+                            <input type="hidden" name="interior_order[{{ $img->property_interior_id }}]" value="{{ $loop->iteration }}" class="interior-order-input">
+                            <div class="form-check mb-0 ms-2">
+                                <input class="form-check-input" type="checkbox" name="delete_interior_ids[]"
+                                    value="{{ $img->property_interior_id }}" id="del_{{ $img->property_interior_id }}">
+                                <label class="form-check-label text-danger" for="del_{{ $img->property_interior_id }}" style="font-size:11px;">Hapus</label>
                             </div>
                         </div>
                     @endforeach
@@ -694,6 +690,7 @@
 </div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/quill/1.3.7/quill.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.3/Sortable.min.js"></script>
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     // ---- Quill WYSIWYG for Description ----
@@ -1194,17 +1191,46 @@ document.addEventListener('DOMContentLoaded', function() {
         const row = document.createElement('div');
         row.className = 'row mb-3 dynamic-row align-items-center';
         row.innerHTML = `
+            <div class="col-auto interior-new-drag-handle"><i class="fas fa-grip-vertical"></i></div>
             <div class="col-md-5">
                 <input type="file" name="interior_images[]" class="form-control gallery-input" accept="image/*">
                 <div style="font-size:11px;color:#777;margin-top:3px;"><i class="fas fa-image me-1" style="color:#3065A3;"></i>JPG, PNG, WebP &nbsp;|&nbsp; Maks 10MB</div>
                 <div class="dim-feedback" style="font-size:11px;margin-top:1px;"></div>
             </div>
-            <div class="col-md-5">
+            <div class="col-md-4">
                 <input type="text" class="form-control" name="interior_labels[]" placeholder="Nama area interior (cth: Ruang Tamu)">
             </div>
             <div class="col-md-2"><button type="button" class="btn btn-outline-danger btn-sm btn-delete"><i class="fas fa-trash"></i></button></div>`;
         document.getElementById('container-interior-gallery').appendChild(row);
     });
+
+    // Sortable: existing interiors
+    var existingSort = document.getElementById('existing-interior-sort');
+    if (existingSort && typeof Sortable !== 'undefined') {
+        Sortable.create(existingSort, {
+            handle: '.interior-drag-handle',
+            animation: 150,
+            ghostClass: 'sortable-ghost',
+            chosenClass: 'sortable-chosen',
+            onEnd: function () {
+                existingSort.querySelectorAll('.interior-sort-item').forEach(function (item, idx) {
+                    var newPos = idx + 1;
+                    item.querySelector('.interior-order-input').value = newPos;
+                    item.querySelector('.order-num').textContent = newPos;
+                });
+            }
+        });
+    }
+
+    // Sortable: new interior rows
+    var newInteriorCont = document.getElementById('container-interior-gallery');
+    if (newInteriorCont && typeof Sortable !== 'undefined') {
+        Sortable.create(newInteriorCont, {
+            handle: '.interior-new-drag-handle',
+            animation: 150,
+            ghostClass: 'sortable-ghost-new',
+        });
+    }
 });
 </script>
 

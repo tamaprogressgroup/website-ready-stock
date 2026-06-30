@@ -27,7 +27,7 @@ Route::get('/register',  [RegisterController::class, 'showRegister'])->name('bac
 Route::post('/register', [RegisterController::class, 'register'])->name('back.register.post');
 
 // ── Front — explicit paths (must be declared before wildcard routes) ───────
-Route::get('/',            [HomeController::class,   'index'])->name('front.home');
+Route::get('/',            [AllProductController::class,   'index'])->name('front.home');
 Route::get('/all-products',[AllProductController::class, 'index'])->name('front.all-products');
 Route::get('/detail-product/{id}', [DetailProductController::class, 'index'])->name('front.detail');
 Route::post('/lead',       [LeadController::class,  'store'])->name('front.lead.store');
@@ -51,6 +51,8 @@ Route::middleware('back.auth')->group(function () {
     Route::put('/customer/property/{id}',             [PropertyController::class, 'update'])->name('customer.property.update');
     Route::delete('/customer/property/{id}',          [PropertyController::class, 'destroy'])->name('customer.property.destroy');
     Route::patch('/customer/property/{id}/status',    [PropertyController::class, 'updateStatus'])->name('customer.property.status');
+    Route::post('/customer/property/reorder',         [PropertyController::class, 'reorder'])->name('customer.property.reorder');
+    Route::get('/customer/property/tayang-for-order', [PropertyController::class, 'tayangForOrder'])->name('customer.property.tayang-for-order');
 
     Route::get('/customer/pasang-property', fn() => redirect()->route('customer.property.create'));
     Route::post('/customer/pasang-property/simpan', [PasangPropertyController::class, 'store'])->name('properti.store');

@@ -50,10 +50,11 @@ class DetailProductController extends BaseFrontController
         $relatedProperties = $this->resolveCache("related_properties:{$id}", $this->lang, fn() =>
             PropertyUnit::with([
                 'translations'              => fn($q) => $q->where('locale', $this->lang),
-                'interiors'                 => fn($q) => $q->whereIn('order', [1, 2])->where('is_active', 1),
+                'interiors'                 => fn($q) => $q->where('order', 1)->where('is_active', 1),
                 'kota',
                 'provinsi',
                 'township',
+                'cluster',
                 'condition.translations'    => fn($q) => $q->where('locale', $this->lang),
                 'propertyType.translations' => fn($q) => $q->where('locale', $this->lang),
                 'tags'                      => fn($q) => $q->where('is_label', 1),

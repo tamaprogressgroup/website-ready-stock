@@ -12,7 +12,8 @@
       "PowerShell($PWD)",
       "Bash(php artisan *)",
       "Bash(findstr /i \"REDIS_KEY\\\\|REDIS_HOST\\\\|REDIS_PORT\\\\|REDIS_DB\" .env)",
-      "PowerShell(php \"d:\\\\xampp6\\\\htdocs\\\\ready-stock-website\\\\flush_redis_temp.php\")"
+      "PowerShell(php \"d:\\\\xampp6\\\\htdocs\\\\ready-stock-website\\\\flush_redis_temp.php\")",
+      "Bash(xargs cat)"
     ]
   }
 }

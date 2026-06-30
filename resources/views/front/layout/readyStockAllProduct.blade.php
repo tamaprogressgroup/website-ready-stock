@@ -180,6 +180,32 @@
         .action-btn:hover { border-color: #3b5998; color: #3b5998; }
         .action-btn.has-filter { border-color: #3b5998; color: #3b5998; background: #eef2ff; }
 
+        /* Tag autocomplete multi-select */
+        .tag-input-wrap {
+            border: 1px solid #dee2e6; border-radius: 8px; padding: 6px 8px;
+            display: flex; flex-wrap: wrap; gap: 6px; align-items: center;
+            background: #fff; cursor: text; min-height: 42px;
+        }
+        .tag-input-wrap:focus-within { border-color: #3b5998; box-shadow: 0 0 0 2px rgba(59,89,152,0.1); }
+        .tag-chip {
+            display: inline-flex; align-items: center; gap: 4px;
+            background: #3b5998; color: #fff; border-radius: 20px;
+            padding: 2px 10px 2px 10px; font-size: 12px; font-weight: 600; white-space: nowrap;
+        }
+        .tag-chip .rm { cursor: pointer; opacity: 0.8; font-size: 11px; margin-left: 2px; }
+        .tag-chip .rm:hover { opacity: 1; }
+        .tag-text-input { border: none; outline: none; font-size: 13px; flex: 1; min-width: 100px; background: transparent; }
+        .tag-dropdown {
+            position: absolute; z-index: 9999; background: #fff;
+            border: 1px solid #dee2e6; border-radius: 8px;
+            box-shadow: 0 4px 16px rgba(0,0,0,0.1); max-height: 200px; overflow-y: auto;
+            width: 100%;
+        }
+        .tag-dropdown-item {
+            padding: 9px 14px; font-size: 13px; cursor: pointer; transition: background 0.12s;
+        }
+        .tag-dropdown-item:hover, .tag-dropdown-item.focused { background: #eef2ff; color: #3b5998; }
+
         /* ===== MAP OVERLAY ===== */
         .map-overlay { position: fixed; inset: 0; z-index: 9999; display: none; flex-direction: column; background: #e8e8e8; }
         .map-overlay.show { display: flex; }
@@ -231,7 +257,7 @@
         @php
             $hasSlugFilter  = !empty($urlSlugs['condition']) || !empty($urlSlugs['type'])
                            || !empty($urlSlugs['kota'])      || !empty($urlSlugs['township']);
-            $hasQueryFilter = request()->hasAny(['price_min','price_max','lt_min','lt_max','lb_min','lb_max','tag','q']);
+            $hasQueryFilter = request()->hasAny(['price_min','price_max','lt_min','lt_max','lb_min','lb_max','tags','twp','q']);
             $hasFilter      = $hasQueryFilter || $hasSlugFilter;
             $sortLabels = [
                 'newest'     => 'Terbaru',
@@ -247,7 +273,7 @@
         <div class="row align-items-center mb-3">
             <div class="col-lg-6 mb-3 mb-lg-0">
                 <form action="{{ url($browseBase) }}" method="get" class="d-flex w-100" id="search-form">
-                    @foreach(request()->only(['sort','price_min','price_max','lt_min','lt_max','lb_min','lb_max','tag']) as $k => $v)
+                    @foreach(request()->only(['sort','price_min','price_max','lt_min','lt_max','lb_min','lb_max','tags','twp']) as $k => $v)
                         @if($v !== '' && $v !== null)
                             <input type="hidden" name="{{ $k }}" value="{{ $v }}">
                         @endif
@@ -338,11 +364,20 @@
                     <i class="fas fa-times chip-remove"></i>
                 </span>
             @endif
-            @if(request('tag'))
-                <span class="active-filter-chip" onclick="clearParam('tag')">
-                    <i class="fas fa-couch" style="font-size:11px;"></i> {{ request('tag') }}
+            @if(request('twp'))
+                @php $twpName = $townships->firstWhere('township_id', request('twp'))?->township_name ?? request('twp'); @endphp
+                <span class="active-filter-chip" onclick="clearParam('twp')">
+                    <i class="fas fa-city" style="font-size:11px;"></i> {{ $twpName }}
                     <i class="fas fa-times chip-remove"></i>
                 </span>
+            @endif
+            @if(request('tags'))
+                @foreach(array_filter(explode(',', request('tags'))) as $activeTag)
+                <span class="active-filter-chip" onclick="removeTagParam('{{ addslashes($activeTag) }}')">
+                    <i class="fas fa-tag" style="font-size:11px;"></i> {{ $activeTag }}
+                    <i class="fas fa-times chip-remove"></i>
+                </span>
+                @endforeach
             @endif
             @if(request('q'))
                 <span class="active-filter-chip" onclick="clearParam('q')">
@@ -511,7 +546,7 @@
                 <nav aria-label="Page navigation">
                     <ul class="pagination pagination-sm mb-0 align-items-center">
                         @php
-                            $pageParams = array_filter(request()->only(['sort','price_min','price_max','lt_min','lt_max','lb_min','lb_max','tag','q','embed','key']), fn($v) => $v !== '' && $v !== null);
+                            $pageParams = array_filter(request()->only(['sort','price_min','price_max','lt_min','lt_max','lb_min','lb_max','tags','twp','q','embed','key']), fn($v) => $v !== '' && $v !== null);
                             $pageUrl = fn(int $p) => url($browseBase . '?' . http_build_query(array_merge($pageParams, ['page' => $p])));
                         @endphp
                         @if ($page > 1)
@@ -608,8 +643,26 @@
 
         <div class="filter-panel-content">
 
-            {{-- Kata Kunci --}}
+            {{-- Project / Township --}}
+            @if($townships->isNotEmpty())
             <div class="filter-section">
+                <div class="filter-section-title">Project</div>
+                <div class="d-flex flex-wrap gap-2">
+                    @foreach($townships as $twn)
+                    <button type="button"
+                            class="filter-chip {{ request('twp') == $twn->township_id ? 'selected' : '' }}"
+                            data-group="twp"
+                            data-value="{{ $twn->township_id }}"
+                            data-label="{{ $twn->township_name }}">
+                        <i class="fas fa-city" style="font-size:13px;"></i> {{ $twn->township_name }}
+                    </button>
+                    @endforeach
+                </div>
+            </div>
+            @endif
+
+            {{-- Kata Kunci --}}
+            <div class="filter-section {{ $townships->isNotEmpty() ? 'mt-3' : '' }}">
                 <div class="filter-section-title">Kata Kunci</div>
                 <input type="text" id="filter-keyword" class="form-control" style="font-size:13px;"
                     placeholder="Cari nama, lokasi..." value="{{ request('q') }}">
@@ -691,20 +744,18 @@
                 </div>
             </div>
 
-            {{-- Furnish --}}
+            {{-- Fitur Tag (multi autocomplete) --}}
             <div class="filter-section mt-3 mb-4">
-                <div class="filter-section-title">Furnish</div>
-                <div class="d-flex flex-wrap gap-2">
-                    <button type="button"
-                            class="filter-chip {{ request('tag') === 'Full Furnish' ? 'selected' : '' }}"
-                            data-group="tag" data-value="Full Furnish" data-label="Full Furnish">
-                        <i class="fas fa-couch" style="font-size:13px;"></i> Full Furnish
-                    </button>
-                    <button type="button"
-                            class="filter-chip {{ request('tag') === 'Free Furnish' ? 'selected' : '' }}"
-                            data-group="tag" data-value="Free Furnish" data-label="Free Furnish">
-                        <i class="fas fa-gift" style="font-size:13px;"></i> Free Furnish
-                    </button>
+                <div class="filter-section-title">Fitur Tag</div>
+                <div style="position:relative;" id="tag-ac-wrap">
+                    <div class="tag-input-wrap" id="tag-input-box">
+                        {{-- existing selected tags rendered as chips --}}
+                        @foreach(array_filter(explode(',', request('tags', ''))) as $st)
+                        <span class="tag-chip" data-tag="{{ $st }}">{{ $st }}<span class="rm" data-tag="{{ $st }}">×</span></span>
+                        @endforeach
+                        <input type="text" class="tag-text-input" id="tag-ac-input" placeholder="Ketik nama tag..." autocomplete="off">
+                    </div>
+                    <div class="tag-dropdown" id="tag-dropdown" style="display:none;"></div>
                 </div>
             </div>
 
@@ -730,7 +781,8 @@
     <input type="hidden" name="lt_max"    id="ff-lt-max"    value="{{ request('lt_max') }}">
     <input type="hidden" name="lb_min"    id="ff-lb-min"    value="{{ request('lb_min') }}">
     <input type="hidden" name="lb_max"    id="ff-lb-max"    value="{{ request('lb_max') }}">
-    <input type="hidden" name="tag"       id="ff-tag"       value="{{ request('tag') }}">
+    <input type="hidden" name="tags"      id="ff-tags"      value="{{ request('tags') }}">
+    <input type="hidden" name="twp"       id="ff-twp"       value="{{ request('twp') }}">
 </form>
 @include('partials.hubspot')
 <script src="{{ asset('vendor/plugins/js/plugins.min.js') }}"></script>
@@ -753,7 +805,7 @@
         slug_condition: urlSlugs.condition,
         slug_type:      urlSlugs.type,
         sort:           '{{ $sort }}',
-        tag:            '{{ request('tag') }}',
+        twp:            '{{ request('twp') }}',
     };
 
     // ── Build browse URL from slug segments + query params ─────────────────
@@ -802,7 +854,8 @@
             document.getElementById('ff-lt-max').value    = document.getElementById('filter-lt-max')?.value    || '';
             document.getElementById('ff-lb-min').value    = document.getElementById('filter-lb-min')?.value    || '';
             document.getElementById('ff-lb-max').value    = document.getElementById('filter-lb-max')?.value    || '';
-            document.getElementById('ff-tag').value       = selections.tag || '';
+            document.getElementById('ff-tags').value      = Array.from(document.querySelectorAll('#tag-input-box .tag-chip')).map(c => c.dataset.tag).filter(Boolean).join(',');
+            document.getElementById('ff-twp').value       = selections.twp || '';
             document.getElementById('ff-q').value         = document.getElementById('filter-keyword')?.value   || '';
             form.submit();
         });
@@ -846,8 +899,10 @@
         if (ltMax)    queryParams.lt_max    = ltMax;
         if (lbMin)    queryParams.lb_min    = lbMin;
         if (lbMax)    queryParams.lb_max    = lbMax;
-        if (selections.tag)   queryParams.tag = selections.tag;
-        if (keyword)          queryParams.q   = keyword;
+        const tagChips = Array.from(document.querySelectorAll('#tag-input-box .tag-chip')).map(c => c.dataset.tag).filter(Boolean);
+        if (tagChips.length)     queryParams.tags = tagChips.join(',');
+        if (selections.twp)      queryParams.twp  = selections.twp;
+        if (keyword)             queryParams.q    = keyword;
 
         window.location.href = buildBrowseUrl(newCond, newType, queryParams);
     });
@@ -862,7 +917,9 @@
         });
         selections.slug_condition = '';
         selections.slug_type      = '';
-        selections.tag            = '';
+        selections.twp            = '';
+        selectedTags = [];
+        renderTagChips();
         window.location.href = '/all-products';
     });
 })();
@@ -903,6 +960,100 @@ function clearSlug(segment) {
 function clearAllFilters() {
     window.location.href = '{{ url('/all-products') }}';
 }
+
+function removeTagParam(tagName) {
+    const url = new URL(window.location.href);
+    const current = url.searchParams.get('tags') || '';
+    const updated = current.split(',').map(t => t.trim()).filter(t => t && t !== tagName);
+    if (updated.length) url.searchParams.set('tags', updated.join(','));
+    else url.searchParams.delete('tags');
+    url.searchParams.delete('page');
+    window.location.href = url.toString();
+}
+</script>
+
+{{-- Tag autocomplete JS --}}
+@php $initialSelectedTags = array_values(array_filter(explode(',', request('tags', '')))); @endphp
+<script>
+(function () {
+    const allTags     = @json($availableTags);
+    const inputEl     = document.getElementById('tag-ac-input');
+    const dropdownEl  = document.getElementById('tag-dropdown');
+    const inputBoxEl  = document.getElementById('tag-input-box');
+
+    let localSelected = @json($initialSelectedTags);
+
+    function renderChips() {
+        inputBoxEl.querySelectorAll('.tag-chip').forEach(c => c.remove());
+        localSelected.forEach(function (tag) {
+            const chip = document.createElement('span');
+            chip.className = 'tag-chip';
+            chip.dataset.tag = tag;
+            chip.innerHTML = tag + '<span class="rm" data-tag="' + escHtml(tag) + '">×</span>';
+            chip.querySelector('.rm').addEventListener('click', function (e) {
+                e.stopPropagation();
+                removeTag(this.dataset.tag);
+            });
+            inputBoxEl.insertBefore(chip, inputEl);
+        });
+    }
+
+    function addTag(tag) {
+        tag = tag.trim();
+        if (!tag || localSelected.includes(tag)) return;
+        localSelected.push(tag);
+        renderChips();
+        inputEl.value = '';
+        hideDropdown();
+    }
+
+    function removeTag(tag) {
+        localSelected = localSelected.filter(t => t !== tag);
+        renderChips();
+    }
+
+    function showDropdown(q) {
+        const filtered = allTags.filter(t => t.toLowerCase().includes(q.toLowerCase()) && !localSelected.includes(t));
+        if (!filtered.length) { hideDropdown(); return; }
+        dropdownEl.innerHTML = filtered.slice(0, 20).map(function (t) {
+            return '<div class="tag-dropdown-item" data-tag="' + escHtml(t) + '">' + escHtml(t) + '</div>';
+        }).join('');
+        dropdownEl.querySelectorAll('.tag-dropdown-item').forEach(function (item) {
+            item.addEventListener('mousedown', function (e) {
+                e.preventDefault();
+                addTag(this.dataset.tag);
+            });
+        });
+        dropdownEl.style.display = 'block';
+    }
+
+    function hideDropdown() { dropdownEl.style.display = 'none'; }
+
+    function escHtml(s) {
+        return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+    }
+
+    inputEl.addEventListener('input', function () {
+        this.value.trim() ? showDropdown(this.value.trim()) : hideDropdown();
+    });
+    inputEl.addEventListener('keydown', function (e) {
+        if ((e.key === 'Enter' || e.key === ',') && this.value.trim()) {
+            e.preventDefault();
+            addTag(this.value.trim());
+        }
+        if (e.key === 'Backspace' && !this.value && localSelected.length) {
+            removeTag(localSelected[localSelected.length - 1]);
+        }
+    });
+    inputEl.addEventListener('blur', function () { setTimeout(hideDropdown, 150); });
+    inputBoxEl.addEventListener('click', function () { inputEl.focus(); });
+
+    // Remove chips added server-side (re-render with JS to attach events)
+    renderChips();
+
+    // Used by reset button
+    window.renderTagChips = function () { localSelected = []; renderChips(); };
+})();
 </script>
 
 {{-- ===== MAP VIEW JS ===== --}}

@@ -27,8 +27,8 @@ class ClusterController extends Controller
         $request->validate([
             'cluster_name' => 'required|string|max:150',
             'is_active'    => 'nullable|boolean',
-            'image'        => 'required|image|mimes:jpeg,png,jpg,webp|dimensions:width=720,height=450',
-            'image_mobile' => 'required|image|mimes:jpeg,png,jpg,webp|dimensions:width=720,height=450',
+            'image'        => 'nullable|image|mimes:jpeg,png,jpg,webp|dimensions:width=720,height=450',
+            'image_mobile' => 'nullable|image|mimes:jpeg,png,jpg,webp|dimensions:width=720,height=450',
         ], [
             'image.dimensions'        => 'Gambar utama harus berukuran tepat 720 x 450 piksel.',
             'image_mobile.dimensions' => 'Gambar mobile harus berukuran tepat 720 x 450 piksel.',
@@ -37,8 +37,8 @@ class ClusterController extends Controller
         Cluster::create([
             'cluster_name'     => $request->cluster_name,
             'is_active'        => $request->boolean('is_active', true) ? 1 : 0,
-            'image'            => $request->file('image')->store('clusters', 'public'),
-            'image_mobile'     => $request->file('image_mobile')->store('clusters/mobile', 'public'),
+            'image'            => $request->hasFile('image') ? $request->file('image')->store('clusters', 'public') : null,
+            'image_mobile'     => $request->hasFile('image_mobile') ? $request->file('image_mobile')->store('clusters/mobile', 'public') : null,
             'created_datetime' => now(),
         ]);
 
