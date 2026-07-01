@@ -44,8 +44,8 @@ class LeadController extends BaseFrontController
             'property_id'      => $request->property_id,
             'township_id'      => $unit?->township_id,
             'cluster_id'       => $unit?->cluster_id,
-            'sumber_informasi' => 'web_form_detail',
-            'contact_form_id'  => 'promo_detail',
+            'sumber_informasi' => $request->get('sumber_informasi', 'web_form_detail'),
+            'contact_form_id'  => $request->get('contact_form_id',  'promo_detail'),
             'hutk'             => $request->get('hubspotutk'),
             'remote_addr'      => $request->ip(),
             'url_form'         => $request->header('referer'),
@@ -60,9 +60,10 @@ class LeadController extends BaseFrontController
 
         $this->submitToHubspot($lead, $request, $unit);
 
-        // Build WA redirect URL from property phone number
-        $waUrl = '';
-        $rawPhone = $unit?->no_hp ?? '';
+        // Build WA redirect URL — key phone overrides property phone if key is active
+        $waUrl    = '';
+        $keyData  = \App\Services\EmbedKeyService::resolve();
+        $rawPhone = ($keyData['no_hp'] ?? '') ?: ($unit?->no_hp ?? '');
         if ($rawPhone) {
             $waPhone   = ltrim($this->formatPhone($rawPhone), '+');
             $propTitle = $unit?->translations->first()?->title

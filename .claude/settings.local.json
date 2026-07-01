@@ -14,7 +14,11 @@
       "Bash(findstr /i \"REDIS_KEY\\\\|REDIS_HOST\\\\|REDIS_PORT\\\\|REDIS_DB\" .env)",
       "PowerShell(php \"d:\\\\xampp6\\\\htdocs\\\\ready-stock-website\\\\flush_redis_temp.php\")",
       "Bash(xargs cat)",
-      "Bash(php -r ' *)"
+      "Bash(php -r ' *)",
+      "Bash(grep -oE \"[A-Za-z0-9\\\\\\\\\\\\\\\\]+Controller\")",
+      "Bash(xargs -I {} basename {})",
+      "Bash(grep -r \"TagTrans\\\\|\\\\\\\\bUser\\\\\\\\b\" \"d:\\\\xampp6\\\\htdocs\\\\ready-stock-website\\\\app\" --include=\"*.php\")",
+      "Bash(grep -r \"Models\\\\\\\\\\\\\\\\User\\\\|use.*User;\" \"d:\\\\xampp6\\\\htdocs\\\\ready-stock-website\\\\app\" --include=\"*.php\")"
     ]
   }
 }
