@@ -118,18 +118,53 @@
 
         var s = document.getElementById('wa-salutation').value;
         var n = document.getElementById('wa-nama').value.trim();
+        var p = document.getElementById('wa-phone-visitor').value.trim();
+        var e = document.getElementById('wa-email').value.trim();
+
         closeWaModal();
-        var base = _waPropUrl ? (_waPropUrl.replace(/\/?$/, '') + '/thankyou') : '/thankyou';
-        if (_waTargetPhone) {
-            var greeting = s ? (s + ' ' + (n || 'Calon Pembeli')) : (n || 'Saya');
-            var text = 'Halo, Saya ' + greeting + ' ingin informasi lengkap tentang ' + _waPropTitle + ', Mohon kirimkan detailnya.';
-            var url = 'https://api.whatsapp.com/send/?phone=' + _waTargetPhone
-                    + '&text=' + encodeURIComponent(text)
-                    + '&type=phone_number&app_absent=0';
-            window.location.href = base + '?wa_url=' + encodeURIComponent(url);
-        } else {
-            window.location.href = base;
-        }
+
+        // Collect UTM params from current URL
+        var urlParams = new URLSearchParams(window.location.search);
+        var hutkMatch = document.cookie.match(/hubspotutk=([^;]+)/);
+
+        // POST to /lead so data is saved to DB and HubSpot
+        var form = document.createElement('form');
+        form.method = 'POST';
+        form.action = '{{ route("front.lead.store") }}';
+        form.style.display = 'none';
+
+        var data = {
+            '_token':           '{{ csrf_token() }}',
+            'salutation':       s,
+            'fullname':         n,
+            'phone_number':     p,
+            'email':            e,
+            'property_id':      _waPropId,
+            'sumber_informasi': 'web_form_card',
+            'contact_form_id':  'promo_card',
+            'hubspotutk':       hutkMatch ? hutkMatch[1] : '',
+            'utm_source':       urlParams.get('utm_source')   || '',
+            'utm_medium':       urlParams.get('utm_medium')   || '',
+            'utm_campaign':     urlParams.get('utm_campaign') || '',
+            'utm_content':      urlParams.get('utm_content')  || '',
+            'utm_term':         urlParams.get('utm_term')     || '',
+            'gclid':            urlParams.get('gclid')        || '',
+        };
+
+        // Pass key param if present so backend can resolve key-phone override
+        var keyParam = urlParams.get('key');
+        if (keyParam) data['key'] = keyParam;
+
+        Object.keys(data).forEach(function (k) {
+            var inp = document.createElement('input');
+            inp.type  = 'hidden';
+            inp.name  = k;
+            inp.value = data[k];
+            form.appendChild(inp);
+        });
+
+        document.body.appendChild(form);
+        form.submit();
     };
 })();
 </script>

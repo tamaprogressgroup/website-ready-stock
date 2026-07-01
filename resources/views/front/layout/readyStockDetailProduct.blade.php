@@ -722,7 +722,16 @@
 								<h4 class="poppins-semibold text-center mb-4 text-5" style="color: #1C5FA8;">Dapatkan Promo Sekarang</h4>
 								<form action="{{ route('front.lead.store') }}" method="POST" id="lead-wa-form" novalidate>
 									@csrf
-									<input type="hidden" name="property_id" value="{{ $property['property_id'] }}">
+									<input type="hidden" name="property_id"     value="{{ $property['property_id'] }}">
+									<input type="hidden" name="sumber_informasi" value="web_form_detail">
+									<input type="hidden" name="contact_form_id"  value="promo_detail">
+									<input type="hidden" name="hubspotutk">
+									<input type="hidden" name="utm_source">
+									<input type="hidden" name="utm_medium">
+									<input type="hidden" name="utm_campaign">
+									<input type="hidden" name="utm_content">
+									<input type="hidden" name="utm_term">
+									<input type="hidden" name="gclid">
 									<div class="mb-3">
 										<select name="salutation" id="lead-salutation" class="form-select text-3 py-2" style="background-color: #f8f9fa; border: none; border-radius: 8px; color: #555;">
 											<option value="">Title</option>
@@ -753,6 +762,18 @@
 								(function () {
 								    var form  = document.getElementById('lead-wa-form');
 								    if (!form) return;
+
+								    // Populate UTM params from current URL
+								    var urlP = new URLSearchParams(window.location.search);
+								    ['utm_source','utm_medium','utm_campaign','utm_content','utm_term','gclid'].forEach(function (k) {
+								        var el = form.querySelector('input[name="' + k + '"]');
+								        if (el) el.value = urlP.get(k) || '';
+								    });
+								    // Populate hubspotutk from cookie
+								    var hutkMatch = document.cookie.match(/hubspotutk=([^;]+)/);
+								    var hutkEl = form.querySelector('input[name="hubspotutk"]');
+								    if (hutkEl && hutkMatch) hutkEl.value = hutkMatch[1];
+
 								    var fields = [
 								        { el: document.getElementById('lead-salutation'), err: document.getElementById('err-salutation'), isSelect: true },
 								        { el: document.getElementById('lead-fullname'),   err: document.getElementById('err-fullname') },
