@@ -31,6 +31,8 @@ html.sticky-header-active #header .header-body {
 /* ===== PROJECT DROPDOWN ===== */
 li.nav-dropdown { position: relative; display: flex; align-items: center; }
 li.nav-dropdown > a { display: flex; align-items: center; gap: 6px; }
+.mob-chevron { display: none; }
+
 li.nav-dropdown > a .dd-caret {
     font-size: 10px;
     transition: transform 0.25s cubic-bezier(.4,0,.2,1);
@@ -117,6 +119,110 @@ li.nav-dropdown:hover .nav-dd-panel {
 .nav-dd-panel li a:hover .dd-icon {
     background: linear-gradient(135deg, #3065A3 0%, #4a7fc1 100%);
     color: #fff;
+}
+
+/* ===== MOBILE NAV ===== */
+@media (max-width: 991px) {
+    #mainNav > li {
+        display: block !important;
+        width: 100%;
+        border-bottom: 1px solid rgba(255,255,255,0.07);
+    }
+    #mainNav > li:last-child { border-bottom: none; }
+
+    #mainNav a.nav-link.custom-nav-link {
+        color: #e8edf5 !important;
+        padding: 15px 20px !important;
+        margin: 0 !important;
+        font-size: 13.5px !important;
+        letter-spacing: 0.3px;
+        display: flex !important;
+        align-items: center;
+        justify-content: space-between;
+    }
+    #mainNav a.nav-link.custom-nav-link:hover,
+    #mainNav a.nav-link.custom-nav-link:active {
+        background: rgba(255,255,255,0.06) !important;
+        color: #ffffff !important;
+    }
+    #mainNav a.nav-link.nav-btn-home {
+        color: #ffffff !important;
+        background-color: #3065A3 !important;
+        border-radius: 0 !important;
+        margin: 0 !important;
+        padding: 15px 20px !important;
+        display: block !important;
+        font-size: 13.5px !important;
+        letter-spacing: 0.3px;
+    }
+
+    /* Project dropdown — hidden by default, toggle on click */
+    li.nav-dropdown { display: block !important; }
+    li.nav-dropdown > a.nav-link {
+        display: flex !important;
+        justify-content: space-between;
+        align-items: center;
+    }
+    .mob-chevron { display: inline-block !important; }
+    li.nav-dropdown > a.nav-link .mob-chevron {
+        font-size: 11px;
+        opacity: 0.5;
+        transition: transform 0.25s ease;
+        margin-left: 8px;
+    }
+    li.nav-dropdown.mobile-open > a.nav-link .mob-chevron {
+        transform: rotate(180deg);
+        opacity: 1;
+    }
+    li.nav-dropdown .nav-dd-panel {
+        position: static !important;
+        opacity: 0 !important;
+        pointer-events: none !important;
+        transform: none !important;
+        translate: unset !important;
+        left: auto !important;
+        width: 100% !important;
+        box-shadow: none !important;
+        border-radius: 0 !important;
+        background: rgba(0,0,0,0.25) !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        max-height: 0;
+        overflow: hidden;
+        transition: max-height 0.3s ease, opacity 0.2s ease !important;
+    }
+    li.nav-dropdown.mobile-open .nav-dd-panel {
+        opacity: 1 !important;
+        pointer-events: auto !important;
+        max-height: 600px;
+        padding: 6px 0 10px !important;
+    }
+    li.nav-dropdown .nav-dd-panel::before { display: none !important; }
+    li.nav-dropdown .nav-dd-panel .dd-label {
+        color: rgba(255,255,255,0.35) !important;
+        padding: 8px 20px 6px !important;
+        font-size: 10px;
+    }
+    li.nav-dropdown .nav-dd-panel li a {
+        color: rgba(255,255,255,0.8) !important;
+        padding: 10px 20px !important;
+        border-radius: 0 !important;
+        font-size: 13.5px !important;
+        white-space: normal !important;
+        transform: none !important;
+    }
+    li.nav-dropdown .nav-dd-panel li a:hover {
+        background: rgba(255,255,255,0.07) !important;
+        color: #ffffff !important;
+        transform: none !important;
+    }
+    li.nav-dropdown .nav-dd-panel li a .dd-icon {
+        background: rgba(255,255,255,0.1) !important;
+        color: rgba(255,255,255,0.7) !important;
+        width: 28px !important;
+        height: 28px !important;
+        font-size: 12px !important;
+    }
 }
 
 /* ===== NAV SEARCH PANEL ===== */
@@ -267,6 +373,7 @@ li.nav-dropdown:hover .nav-dd-panel {
                                                href="#"
                                                style="padding: 10px 18px !important;">
                                                Project
+                                               <i class="fas fa-chevron-down mob-chevron"></i>
                                             </a>
                                             @if($navTownships->isNotEmpty())
                                             <ul class="nav-dd-panel poppins-semibold">
@@ -319,14 +426,44 @@ li.nav-dropdown:hover .nav-dd-panel {
     </div>
 </header>
 
+{{-- Mobile Search Modal --}}
+<div id="mob-search-overlay"
+     style="display:none;position:fixed;inset:0;z-index:20000;background:rgba(10,18,40,0.72);backdrop-filter:blur(4px);align-items:flex-start;justify-content:center;padding-top:80px;"
+     onclick="if(event.target===this)closeMobSearch()">
+    <div style="width:calc(100% - 32px);max-width:400px;background:#fff;border-radius:16px;padding:20px;box-shadow:0 16px 48px rgba(0,0,0,0.25);">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
+            <span style="font-size:15px;font-weight:700;color:#2a3a5e;font-family:inherit;">Cari Properti</span>
+            <button onclick="closeMobSearch()" style="background:none;border:none;color:#aab4c8;font-size:20px;cursor:pointer;line-height:1;padding:0;">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+        <div style="display:flex;align-items:center;gap:0;background:#f4f6fb;border-radius:10px;padding:4px 4px 4px 14px;border:1.5px solid #e0e7f3;">
+            <input type="text" id="mob-search-input" placeholder="Nama properti, lokasi..."
+                   autocomplete="off"
+                   style="flex:1;border:none;background:transparent;outline:none;font-size:15px;color:#2a3a5e;font-family:inherit;padding:8px 0;">
+            <button id="mob-search-go" type="button"
+                    style="width:40px;height:40px;border-radius:8px;background:linear-gradient(135deg,#3065A3 0%,#4a7fc1 100%);border:none;color:#fff;display:flex;align-items:center;justify-content:center;font-size:14px;cursor:pointer;flex-shrink:0;">
+                <i class="fas fa-search"></i>
+            </button>
+        </div>
+        <div style="font-size:11px;color:#aab4c8;margin-top:10px;text-align:center;">Tekan Enter atau ketuk <i class="fas fa-search"></i> untuk mencari</div>
+    </div>
+</div>
+
 <script>
 (function () {
-    const toggle  = document.getElementById('nav-search-toggle');
-    const panel   = document.getElementById('nav-search-panel');
-    const input   = document.getElementById('nav-search-input');
-    const goBtn   = document.getElementById('nav-search-go');
-    const allUrl  = '{{ route('front.all-products') }}';
+    const toggle   = document.getElementById('nav-search-toggle');
+    const panel    = document.getElementById('nav-search-panel');
+    const input    = document.getElementById('nav-search-input');
+    const goBtn    = document.getElementById('nav-search-go');
+    const mobOver  = document.getElementById('mob-search-overlay');
+    const mobInput = document.getElementById('mob-search-input');
+    const mobGo    = document.getElementById('mob-search-go');
+    const allUrl   = '{{ route('front.all-products') }}';
 
+    function isMobile() { return window.innerWidth <= 991; }
+
+    // ── Desktop panel ──────────────────────────────────────────────
     function openPanel() {
         panel.classList.add('is-open');
         setTimeout(function () { input.focus(); }, 50);
@@ -341,10 +478,31 @@ li.nav-dropdown:hover .nav-dd-panel {
         window.location.href = allUrl + '?q=' + encodeURIComponent(q);
     }
 
+    // ── Mobile modal ───────────────────────────────────────────────
+    window.closeMobSearch = function () {
+        mobOver.style.display = 'none';
+        mobInput.value = '';
+    };
+    function openMobSearch() {
+        mobOver.style.display = 'flex';
+        setTimeout(function () { mobInput.focus(); }, 80);
+    }
+    function doMobSearch() {
+        var q = mobInput.value.trim();
+        if (!q) return;
+        window.location.href = allUrl + '?q=' + encodeURIComponent(q);
+    }
+
+    // ── Toggle: route to mobile or desktop ────────────────────────
     toggle.addEventListener('click', function (e) {
         e.stopPropagation();
-        panel.classList.contains('is-open') ? closePanel() : openPanel();
+        if (isMobile()) {
+            openMobSearch();
+        } else {
+            panel.classList.contains('is-open') ? closePanel() : openPanel();
+        }
     });
+
     goBtn.addEventListener('click', doSearch);
     input.addEventListener('keydown', function (e) {
         if (e.key === 'Enter') doSearch();
@@ -352,5 +510,25 @@ li.nav-dropdown:hover .nav-dd-panel {
     });
     panel.addEventListener('click', function (e) { e.stopPropagation(); });
     document.addEventListener('click', closePanel);
+
+    mobGo.addEventListener('click', doMobSearch);
+    mobInput.addEventListener('keydown', function (e) {
+        if (e.key === 'Enter') doMobSearch();
+        if (e.key === 'Escape') closeMobSearch();
+    });
+})();
+
+// Mobile: toggle Project dropdown on click
+(function () {
+    var navDd = document.querySelector('li.nav-dropdown');
+    if (!navDd) return;
+    var ddToggle = navDd.querySelector(':scope > a');
+    if (!ddToggle) return;
+
+    ddToggle.addEventListener('click', function (e) {
+        if (window.innerWidth > 991) return; // desktop: let CSS :hover handle it
+        e.preventDefault();
+        navDd.classList.toggle('mobile-open');
+    });
 })();
 </script>

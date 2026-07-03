@@ -417,14 +417,14 @@
                         </div>
                         <img src="{{ url($prop['image']) }}" class="img-fluid" alt="{{ $prop['title'] }}" style="border-radius: 8px; height: 180px; width: 100%; object-fit: cover;">
                     </div>
-                    <div class="card-body px-3 py-2">
+                    <div class="card-body px-3 py-2 d-flex flex-column">
                         <div class="d-flex justify-content-between align-items-center mb-1">
                             <h4 class="font-weight-bold text-4 mb-0" style="color: #3b5998;">{{ $prop['price'] }}</h4>
                             <a href="{{ $prop['detail_url'] }}{{ $embedSuffix }}" onclick="event.stopPropagation()"><i class="fas fa-arrow-right" style="color: #3b5998; font-size: 14px;"></i></a>
                         </div>
-                        <h5 class="font-weight-semibold text-3 mb-1 mt-2" style="line-height: 1.3; color: #333; height: 38px; overflow: hidden; font-size: 14px;">{{ $prop['title'] }}</h5>
+                        <h5 class="font-weight-semibold text-3 mb-1 mt-2" style="line-height: 1.4; color: #333; font-size: 14px;">{{ $prop['title'] }}</h5>
                         <p class="mb-2" style="font-size: 11px; color: #888;">{{ $prop['location'] }}</p>
-                        <div class="d-flex justify-content-between align-items-center mb-3" style="font-size: 11px; color: #666; padding-bottom: 10px; border-bottom: 1px solid #eee;">
+                        <div class="d-flex justify-content-between align-items-center mb-3 mt-auto" style="font-size: 11px; color: #666; padding-bottom: 10px; border-bottom: 1px solid #eee;">
                             <div class="d-flex align-items-center"><i class="fas fa-bed me-1" style="color: #a0a0a0;"></i><span class="font-weight-bold text-color-dark">{{ $prop['beds'] }}</span></div>
                             <div class="d-flex align-items-center"><i class="fas fa-bath me-1" style="color: #a0a0a0;"></i><span class="font-weight-bold text-color-dark">{{ $prop['baths'] }}</span></div>
                             <div>LT <span class="font-weight-bold text-color-dark ms-1">{{ $prop['lt'] }}m²</span></div>
@@ -495,14 +495,14 @@
                         </div>
                         <img src="{{ url($prop['image']) }}" class="img-fluid" alt="{{ $prop['title'] }}" style="border-radius: 8px; height: 180px; width: 100%; object-fit: cover;">
                     </div>
-                    <div class="card-body px-3 py-2">
+                    <div class="card-body px-3 py-2 d-flex flex-column">
                         <div class="d-flex justify-content-between align-items-center mb-1">
                             <h4 class="font-weight-bold text-4 mb-0" style="color: #3b5998;">{{ $prop['price'] }}</h4>
                             <a href="{{ $prop['detail_url'] }}{{ $embedSuffix }}" onclick="event.stopPropagation()"><i class="fas fa-arrow-right" style="color: #3b5998; font-size: 14px;"></i></a>
                         </div>
-                        <h5 class="font-weight-semibold text-3 mb-1 mt-2" style="line-height: 1.3; color: #333; height: 38px; overflow: hidden; font-size: 14px;">{{ $prop['title'] }}</h5>
+                        <h5 class="font-weight-semibold text-3 mb-1 mt-2" style="line-height: 1.4; color: #333; font-size: 14px;">{{ $prop['title'] }}</h5>
                         <p class="mb-2" style="font-size: 11px; color: #888;">{{ $prop['location'] }}</p>
-                        <div class="d-flex justify-content-between align-items-center mb-3" style="font-size: 11px; color: #666; padding-bottom: 10px; border-bottom: 1px solid #eee;">
+                        <div class="d-flex justify-content-between align-items-center mb-3 mt-auto" style="font-size: 11px; color: #666; padding-bottom: 10px; border-bottom: 1px solid #eee;">
                             <div class="d-flex align-items-center"><i class="fas fa-bed me-1" style="color: #a0a0a0;"></i><span class="font-weight-bold text-color-dark">{{ $prop['beds'] }}</span></div>
                             <div class="d-flex align-items-center"><i class="fas fa-bath me-1" style="color: #a0a0a0;"></i><span class="font-weight-bold text-color-dark">{{ $prop['baths'] }}</span></div>
                             <div>LT <span class="font-weight-bold text-color-dark ms-1">{{ $prop['lt'] }}m²</span></div>

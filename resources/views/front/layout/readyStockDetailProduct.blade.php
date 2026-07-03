@@ -719,7 +719,8 @@
 								   <i class="fab fa-whatsapp me-2 text-4"></i> WhatsApp Sekarang
 								</a>
 							@else
-								<h4 class="poppins-semibold text-center mb-4 text-5" style="color: #1C5FA8;">Dapatkan Promo Sekarang</h4>
+								<h4 class="poppins-semibold text-center mb-1 text-5" style="color: #1C5FA8;">Dapatkan Promo Sekarang</h4>
+								<p class="text-center" style="font-size:11px;color:#aab4c8;margin-bottom:16px;"><span style="color:#dc3545;">*</span> wajib diisi</p>
 								<form action="{{ route('front.lead.store') }}" method="POST" id="lead-wa-form" novalidate>
 									@csrf
 									<input type="hidden" name="property_id"     value="{{ $property['property_id'] }}">
@@ -734,25 +735,24 @@
 									<input type="hidden" name="gclid">
 									<div class="mb-3">
 										<select name="salutation" id="lead-salutation" class="form-select text-3 py-2" style="background-color: #f8f9fa; border: none; border-radius: 8px; color: #555;">
-											<option value="">Title</option>
+											<option value="">Title *</option>
 											<option value="Bapak">Bapak</option>
 											<option value="Ibu">Ibu</option>
 										</select>
 										<div class="lead-err" id="err-salutation" style="display:none; color:#dc3545; font-size:12px; margin-top:4px; padding-left:2px;">Silakan pilih title.</div>
 									</div>
 									<div class="mb-3">
-										<input type="text" name="fullname" id="lead-fullname" class="form-control text-3 py-2" placeholder="Nama" style="background-color: #f8f9fa; border: none; border-radius: 8px;">
+										<input type="text" name="fullname" id="lead-fullname" class="form-control text-3 py-2" placeholder="Nama *" style="background-color: #f8f9fa; border: none; border-radius: 8px;">
 										<div class="lead-err" id="err-fullname" style="display:none; color:#dc3545; font-size:12px; margin-top:4px; padding-left:2px;">Nama wajib diisi.</div>
 									</div>
 									<div class="mb-3">
-										<input name="phone_number" type="number" id="lead-phone" pattern="[\d\s\+\-\(\)]{6,20}" class="form-control text-3 py-2" placeholder="No. Telepon" style="background-color: #f8f9fa; border: none; border-radius: 8px;">
+										<input name="phone_number" type="number" id="lead-phone" pattern="[\d\s\+\-\(\)]{6,20}" class="form-control text-3 py-2" placeholder="No. Telepon *" style="background-color: #f8f9fa; border: none; border-radius: 8px;">
 										<div class="lead-err" id="err-phone" style="display:none; color:#dc3545; font-size:12px; margin-top:4px; padding-left:2px;">No. Telepon wajib diisi.</div>
 									</div>
 									<div class="mb-4">
-										<input type="email" name="email" id="lead-email" class="form-control text-3 py-2" placeholder="Email" style="background-color: #f8f9fa; border: none; border-radius: 8px;">
-										<div class="lead-err" id="err-email" style="display:none; color:#dc3545; font-size:12px; margin-top:4px; padding-left:2px;">Email wajib diisi.</div>
+										<input type="email" name="email" id="lead-email" class="form-control text-3 py-2" placeholder="Email (opsional)" style="background-color: #f8f9fa; border: none; border-radius: 8px;">
 									</div>
-									<button type="submit"
+									<button type="submit" id="lead-submit-btn"
 									   class="btn w-100 font-weight-bold py-2 text-color-light d-flex align-items-center justify-content-center"
 									   style="background-color: #61c97d; border-radius: 8px; border: none; font-size: 14px;">
 									   <i class="fab fa-whatsapp me-2 text-4"></i> WhatsApp
@@ -774,11 +774,11 @@
 								    var hutkEl = form.querySelector('input[name="hubspotutk"]');
 								    if (hutkEl && hutkMatch) hutkEl.value = hutkMatch[1];
 
+								    // Only mandatory fields — email excluded
 								    var fields = [
-								        { el: document.getElementById('lead-salutation'), err: document.getElementById('err-salutation'), isSelect: true },
+								        { el: document.getElementById('lead-salutation'), err: document.getElementById('err-salutation') },
 								        { el: document.getElementById('lead-fullname'),   err: document.getElementById('err-fullname') },
 								        { el: document.getElementById('lead-phone'),      err: document.getElementById('err-phone') },
-								        { el: document.getElementById('lead-email'),      err: document.getElementById('err-email') },
 								    ];
 								    function validate(field) {
 								        var val = field.el.value.trim();
@@ -798,7 +798,15 @@
 								            e.preventDefault();
 								            var first = fields.find(function (f) { return f.err.style.display === 'block'; });
 								            if (first) first.el.focus();
+								            return;
 								        }
+								        // Show loading state
+								        var btn = document.getElementById('lead-submit-btn');
+								        if (btn) {
+								            btn.disabled = true;
+								            btn.innerHTML = '<span style="display:inline-block;width:18px;height:18px;border:3px solid rgba(255,255,255,0.4);border-top-color:#fff;border-radius:50%;animation:lead-spin 0.75s linear infinite;margin-right:8px;vertical-align:middle;"></span> Mengirim...';
+								        }
+								        if (typeof showLeadLoading === 'function') showLeadLoading();
 								    });
 								})();
 								</script>
@@ -839,7 +847,7 @@
 									<i class="fas fa-arrow-right" style="color: #3b5998; font-size: 14px;"></i>
 								</a>
 							</div>
-							<h5 class="font-weight-semibold text-3 mb-1 mt-2" style="line-height: 1.3; color: #333; height: 38px; overflow: hidden; font-size: 14px;">{{ $prop['title'] }}</h5>
+							<h5 class="font-weight-semibold text-3 mb-1 mt-2" style="line-height: 1.4; color: #333; font-size: 14px;">{{ $prop['title'] }}</h5>
 							<p class="mb-2" style="font-size: 11px; color: #888;">{{ $prop['location'] }}</p>
 							<div class="d-flex justify-content-between align-items-center mb-3"
 								style="font-size: 11px; color: #666; padding-bottom: 10px; border-bottom: 1px solid #eee;">
