@@ -134,8 +134,8 @@ class DetailProductController extends BaseFrontController
             $specs = [
                 ['key' => 'Luas Tanah',    'value' => $unit->land_area     ?? '-', 'unit' => 'm²'],
                 ['key' => 'Luas Bangunan', 'value' => $unit->building_area ?? '-', 'unit' => 'm²'],
-                ['key' => 'Carport',       'value' => $unit->carports      ?? '-', 'unit' => ''],
-                ['key' => 'Listrik',       'value' => $unit->electricity   ?? '-', 'unit' => 'VA'],
+                ['key' => 'Kamar Tidur',   'value' => $unit->bedrooms      ?? '-', 'unit' => ''],
+                ['key' => 'Kamar Mandi',   'value' => $unit->bathroom      ?? '-', 'unit' => ''],
             ];
         }
 
