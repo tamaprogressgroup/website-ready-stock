@@ -134,6 +134,25 @@
                         </div>
                     </div>
 
+                    <div class="mb-4">
+                        <label class="form-label text-dark fw-semibold mb-3">Tipe Listing <span class="badge-wajib">Wajib</span></label>
+                        @php $oldListingType = old('listing_type', 'jual'); @endphp
+                        <div class="d-flex flex-wrap gap-2">
+                            <div class="radio-card">
+                                <input type="radio" name="listing_type" id="listing_jual" value="jual" {{ $oldListingType == 'jual' ? 'checked' : '' }}>
+                                <label for="listing_jual"><i class="fas fa-tag"></i> Dijual</label>
+                            </div>
+                            <div class="radio-card">
+                                <input type="radio" name="listing_type" id="listing_sewa" value="sewa" {{ $oldListingType == 'sewa' ? 'checked' : '' }}>
+                                <label for="listing_sewa"><i class="fas fa-key"></i> Sewa</label>
+                            </div>
+                            <div class="radio-card">
+                                <input type="radio" name="listing_type" id="listing_jual_sewa" value="jual_sewa" {{ $oldListingType == 'jual_sewa' ? 'checked' : '' }}>
+                                <label for="listing_jual_sewa"><i class="fas fa-exchange-alt"></i> Dijual / Sewa</label>
+                            </div>
+                        </div>
+                    </div>
+
                     <div class="row mb-4">
                         <div class="col-md-6 mb-3">
                             <label class="form-label text-dark fw-semibold">Provinsi <span class="badge-wajib">Wajib</span></label>
@@ -260,6 +279,37 @@
                             <div class="input-group"><input type="number" class="form-control" name="land_area" value="{{ old('land_area') }}" placeholder="0" min="0"><span class="input-group-text">m²</span></div></div>
                         <div class="col-md-3 mb-3"><label class="form-label">Luas Bangunan</label>
                             <div class="input-group"><input type="number" class="form-control" name="building_area" value="{{ old('building_area') }}" placeholder="0" min="0"><span class="input-group-text">m²</span></div></div>
+                    </div>
+
+                    <div id="section-detail-sewa" class="mb-5 p-4 rounded border {{ in_array($oldListingType, ['sewa', 'jual_sewa']) ? '' : 'd-none' }}" style="background:#f8faff;">
+                        <h5 class="fw-bold text-dark mb-1"><i class="fas fa-key me-2 text-primary"></i>Detail Sewa</h5>
+                        <p class="text-muted mb-4" style="font-size:12px;">Diisi kalau Tipe Listing di atas adalah Sewa / Dijual / Sewa.</p>
+                        <div class="row">
+                            <div class="col-md-4 mb-3">
+                                <label class="form-label">Furnishing</label>
+                                <select name="furnishing_status" class="form-select">
+                                    <option value="">-- Pilih --</option>
+                                    <option value="unfurnished" {{ old('furnishing_status') == 'unfurnished' ? 'selected' : '' }}>Unfurnished</option>
+                                    <option value="semi_furnished" {{ old('furnishing_status') == 'semi_furnished' ? 'selected' : '' }}>Semi Furnished</option>
+                                    <option value="furnished" {{ old('furnishing_status') == 'furnished' ? 'selected' : '' }}>Fully Furnished</option>
+                                </select>
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <label class="form-label">Minimal Masa Sewa (bulan)</label>
+                                <input type="number" class="form-control" name="min_rent_duration" value="{{ old('min_rent_duration') }}" placeholder="Misal: 12" min="0">
+                            </div>
+                            <div class="col-md-4 mb-3">
+                                <label class="form-label">Ketersediaan</label>
+                                <select name="availability_status" id="availability_status" class="form-select">
+                                    <option value="available_now" {{ old('availability_status', 'available_now') == 'available_now' ? 'selected' : '' }}>Tersedia Sekarang</option>
+                                    <option value="available_from" {{ old('availability_status') == 'available_from' ? 'selected' : '' }}>Tersedia Mulai Tanggal</option>
+                                </select>
+                            </div>
+                            <div class="col-md-4 mb-3" id="wrap-available-from-date" style="{{ old('availability_status') == 'available_from' ? '' : 'display:none;' }}">
+                                <label class="form-label">Tersedia Mulai</label>
+                                <input type="date" class="form-control" name="available_from_date" value="{{ old('available_from_date') }}">
+                            </div>
+                        </div>
                     </div>
 
                     <div class="d-flex align-items-center justify-content-between mb-2">
@@ -418,9 +468,9 @@
                 <div id="step-content-4" class="wizard-step d-none bg-white p-4 p-lg-5 rounded-lg shadow-sm border border-light">
                     <h3 class="fw-bold text-dark mb-4 border-bottom pb-3">4. Harga & Media</h3>
 
-                    <div class="row mb-5">
+                    <div id="section-harga-jual" class="row mb-5 {{ $oldListingType == 'sewa' ? 'd-none' : '' }}">
                         <div class="col-md-6 mb-3">
-                            <label class="form-label fw-semibold">Harga Properti <span class="badge-wajib">Wajib</span></label>
+                            <label class="form-label fw-semibold">Harga Jual <span class="badge-wajib">Wajib</span></label>
                             <div class="input-group">
                                 <span class="input-group-text bg-light">Rp</span>
                                 <input type="text" class="form-control py-2" name="price" value="{{ old('price') }}" placeholder="Misal: 1.100.000.000">
@@ -432,6 +482,50 @@
                                 <span class="input-group-text bg-light">Rp</span>
                                 <input type="text" class="form-control py-2" name="discount" value="{{ old('discount') }}" placeholder="Misal: 50.000.000">
                             </div>
+                        </div>
+                    </div>
+
+                    <div id="section-harga-sewa" class="row mb-5 {{ in_array($oldListingType, ['sewa', 'jual_sewa']) ? '' : 'd-none' }}">
+                        <div class="col-md-4 mb-3">
+                            <label class="form-label fw-semibold">Harga Sewa / Tahun</label>
+                            <div class="input-group">
+                                <span class="input-group-text bg-light">Rp</span>
+                                <input type="text" class="form-control py-2" name="rent_price_year" value="{{ old('rent_price_year') }}" placeholder="Misal: 25.000.000">
+                            </div>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label class="form-label fw-semibold">Harga Sewa / Bulan</label>
+                            <div class="input-group">
+                                <span class="input-group-text bg-light">Rp</span>
+                                <input type="text" class="form-control py-2" name="rent_price_month" value="{{ old('rent_price_month') }}" placeholder="Misal: 2.500.000">
+                            </div>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label class="form-label fw-semibold">Deposit</label>
+                            <div class="input-group">
+                                <span class="input-group-text bg-light">Rp</span>
+                                <input type="text" class="form-control py-2" name="deposit_amount" value="{{ old('deposit_amount') }}" placeholder="Misal: 5.000.000">
+                            </div>
+                        </div>
+                        <p class="text-muted mb-2" style="font-size:12px;">Isi salah satu atau kedua harga sewa (per tahun / per bulan).</p>
+                        <div class="col-12">
+                            <label class="form-label fw-semibold">Tampilkan di Halaman Depan</label>
+                            @php $oldRentDisplay = old('rent_price_display', 'both'); @endphp
+                            <div class="d-flex flex-wrap gap-2">
+                                <div class="radio-card">
+                                    <input type="radio" name="rent_price_display" id="rpd_year" value="year" {{ $oldRentDisplay == 'year' ? 'checked' : '' }}>
+                                    <label for="rpd_year">Per Tahun</label>
+                                </div>
+                                <div class="radio-card">
+                                    <input type="radio" name="rent_price_display" id="rpd_month" value="month" {{ $oldRentDisplay == 'month' ? 'checked' : '' }}>
+                                    <label for="rpd_month">Per Bulan</label>
+                                </div>
+                                <div class="radio-card">
+                                    <input type="radio" name="rent_price_display" id="rpd_both" value="both" {{ $oldRentDisplay == 'both' ? 'checked' : '' }}>
+                                    <label for="rpd_both">Keduanya</label>
+                                </div>
+                            </div>
+                            <p class="text-muted mb-0 mt-1" style="font-size:12px;">Menentukan harga sewa mana yang tampil di halaman depan, terlepas dari harga mana saja yang diisi di atas.</p>
                         </div>
                     </div>
 
@@ -630,6 +724,34 @@ document.addEventListener('DOMContentLoaded', function() {
     descInput.closest('form').addEventListener('submit', function() {
         descInput.value = quill.root.innerHTML === '<p><br></p>' ? '' : quill.root.innerHTML;
     });
+
+    // ---- Tipe Listing: toggle section Detail Sewa & Harga Jual/Sewa ----
+    function toggleSectionInputs(el, show) {
+        el.classList.toggle('d-none', !show);
+        el.querySelectorAll('input, select, textarea').forEach(function(field) {
+            field.disabled = !show;
+        });
+    }
+    function applyListingType() {
+        const val = document.querySelector('input[name="listing_type"]:checked')?.value || 'jual';
+        const isSewa = val === 'sewa' || val === 'jual_sewa';
+        toggleSectionInputs(document.getElementById('section-detail-sewa'), isSewa);
+        toggleSectionInputs(document.getElementById('section-harga-sewa'), isSewa);
+        toggleSectionInputs(document.getElementById('section-harga-jual'), val !== 'sewa');
+    }
+    document.querySelectorAll('input[name="listing_type"]').forEach(function(r) {
+        r.addEventListener('change', applyListingType);
+    });
+    applyListingType();
+
+    // ---- Ketersediaan Sewa: toggle tanggal "Tersedia Mulai" ----
+    const availabilitySelect = document.getElementById('availability_status');
+    const availableFromWrap  = document.getElementById('wrap-available-from-date');
+    if (availabilitySelect && availableFromWrap) {
+        availabilitySelect.addEventListener('change', function() {
+            availableFromWrap.style.display = this.value === 'available_from' ? '' : 'none';
+        });
+    }
 
     // ---- Icon image upload handlers (event delegation) ----
     document.body.addEventListener('change', function(e) {

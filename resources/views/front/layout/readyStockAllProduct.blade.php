@@ -4,12 +4,12 @@
 <head>
 	<meta charset="utf-8">
 	<meta name="viewport" content="width=device-width, initial-scale=1, minimum-scale=1.0, shrink-to-fit=no">
-	<title>{{ $pageSeo?->meta_title ?? 'Semua Properti - Paradise Ready Stock' }}</title>
+	<title>{{ $seoTitle ?? $pageSeo?->meta_title ?? 'Semua Properti - Paradise Ready Stock' }}</title>
 	<meta name="keywords" content="{{ $pageSeo?->meta_keyword ?? '' }}">
-	<meta name="description" content="{{ $pageSeo?->meta_description ?? '' }}">
+	<meta name="description" content="{{ $seoDescription ?? $pageSeo?->meta_description ?? '' }}">
 	<meta name="author" content="paradise.co.id">
-	<meta property="og:title" content="{{ $pageSeo?->og_title ?? $pageSeo?->meta_title ?? '' }}">
-	<meta property="og:description" content="{{ $pageSeo?->og_description ?? $pageSeo?->meta_description ?? '' }}">
+	<meta property="og:title" content="{{ $pageSeo?->og_title ?? $seoTitle ?? $pageSeo?->meta_title ?? '' }}">
+	<meta property="og:description" content="{{ $pageSeo?->og_description ?? $seoDescription ?? $pageSeo?->meta_description ?? '' }}">
 	<meta property="og:type" content="website">
 
 	<link id="googleFonts" href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
@@ -257,7 +257,8 @@
         @php
             $hasSlugFilter  = !empty($urlSlugs['condition']) || !empty($urlSlugs['type'])
                            || !empty($urlSlugs['kota'])      || !empty($urlSlugs['township']);
-            $hasQueryFilter = request()->hasAny(['price_min','price_max','lt_min','lt_max','lb_min','lb_max','tags','twp','q']);
+            $hasQueryFilter = request()->anyFilled(['price_min','price_max','lt_min','lt_max','lb_min','lb_max','tags','twp','q'])
+                           || ($listingTypeFilter ?? 'jual') === 'sewa';
             $hasFilter      = $hasQueryFilter || $hasSlugFilter;
             $sortLabels = [
                 'newest'     => 'Terbaru',
@@ -273,7 +274,7 @@
         <div class="row align-items-center mb-3">
             <div class="col-lg-6 mb-3 mb-lg-0">
                 <form action="{{ url($browseBase) }}" method="get" class="d-flex w-100" id="search-form">
-                    @foreach(request()->only(['sort','price_min','price_max','lt_min','lt_max','lb_min','lb_max','tags','twp']) as $k => $v)
+                    @foreach(request()->only(['sort','price_min','price_max','lt_min','lt_max','lb_min','lb_max','tags','twp','listing_type']) as $k => $v)
                         @if($v !== '' && $v !== null)
                             <input type="hidden" name="{{ $k }}" value="{{ $v }}">
                         @endif
@@ -385,6 +386,12 @@
                     <i class="fas fa-times chip-remove"></i>
                 </span>
             @endif
+            @if(($listingTypeFilter ?? 'jual') === 'sewa')
+                <span class="active-filter-chip" onclick="clearParam('listing_type')">
+                    <i class="fas fa-key" style="font-size:11px;"></i> Disewa
+                    <i class="fas fa-times chip-remove"></i>
+                </span>
+            @endif
             <span class="active-filter-chip" style="background:#fff0f0; color:#dc3545; border-color:#f5c6cb;" onclick="clearAllFilters()" title="Hapus semua filter">
                 <i class="fas fa-times" style="font-size:11px;"></i> Reset Semua
             </span>
@@ -409,17 +416,28 @@
             @forelse (array_slice($properties, 0, 8) as $prop)
             <div class="col-lg-3 col-md-6 mb-4">
                 <div class="card border border-color-grey-1 bg-white h-100" style="border-radius: 12px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); cursor:pointer;" onclick="window.location='{{ $prop['detail_url'] }}{{ $embedSuffix }}'">
-                    <div class="position-relative p-2">
-                        <div class="position-absolute top-0 left-0 pt-3 ms-3 z-index-1">
+                    <div class="p-2">
+                    <div class="position-relative">
+                        <div class="position-absolute top-0 left-0 pt-2 ms-3 z-index-1">
                             @foreach ($prop['badges'] as $badge)
                                 <span class="badge font-weight-semibold px-2 py-1 me-1" style="background-color: {{ $badge['bg'] }}; color: {{ $badge['color'] }}; border-radius: 4px; font-size: 10px;">{{ $badge['text'] }}</span>
                             @endforeach
                         </div>
+                        <div class="position-absolute bottom-0 left-0 pb-2 ms-3 z-index-1">
+                            @if(($prop['listing_type'] ?? 'jual') === 'sewa')
+                                <span class="badge font-weight-semibold px-2 py-1" style="background-color: #3730a3; color: #fff; border-radius: 4px; font-size: 10px;">Sewa</span>
+                            @elseif(($prop['listing_type'] ?? 'jual') === 'jual_sewa')
+                                <span class="badge font-weight-semibold px-2 py-1" style="background-color: #5b21b6; color: #fff; border-radius: 4px; font-size: 10px;">Jual / Sewa</span>
+                            @else
+                                <span class="badge font-weight-semibold px-2 py-1" style="background-color: #166534; color: #fff; border-radius: 4px; font-size: 10px;">Jual</span>
+                            @endif
+                        </div>
                         <img src="{{ url($prop['image']) }}" class="img-fluid" alt="{{ $prop['title'] }}" style="border-radius: 8px; height: 180px; width: 100%; object-fit: cover;">
+                    </div>
                     </div>
                     <div class="card-body px-3 py-2 d-flex flex-column">
                         <div class="d-flex justify-content-between align-items-center mb-1">
-                            <h4 class="font-weight-bold text-4 mb-0" style="color: #3b5998;">{{ $prop['price'] }}</h4>
+                            <h4 class="font-weight-bold text-4 mb-0" style="color: #3b5998;">{{ ($listingTypeFilter ?? 'jual') === 'sewa' ? ($prop['rent_price'] ?? $prop['price'] ?? '') : ($prop['price'] ?? $prop['rent_price'] ?? '') }}</h4>
                             <a href="{{ $prop['detail_url'] }}{{ $embedSuffix }}" onclick="event.stopPropagation()"><i class="fas fa-arrow-right" style="color: #3b5998; font-size: 14px;"></i></a>
                         </div>
                         <h5 class="font-weight-semibold text-3 mb-1 mt-2" style="line-height: 1.4; color: #333; font-size: 14px;">{{ $prop['title'] }}</h5>
@@ -487,17 +505,28 @@
             @foreach (array_slice($properties, 8) as $prop)
             <div class="col-lg-3 col-md-6 mb-4">
                 <div class="card border border-color-grey-1 bg-white h-100" style="border-radius: 12px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); cursor:pointer;" onclick="window.location='{{ $prop['detail_url'] }}{{ $embedSuffix }}'">
-                    <div class="position-relative p-2">
-                        <div class="position-absolute top-0 left-0 pt-3 ms-3 z-index-1">
+                    <div class="p-2">
+                    <div class="position-relative">
+                        <div class="position-absolute top-0 left-0 pt-2 ms-3 z-index-1">
                             @foreach ($prop['badges'] as $badge)
                                 <span class="badge font-weight-semibold px-2 py-1 me-1" style="background-color: {{ $badge['bg'] }}; color: {{ $badge['color'] }}; border-radius: 4px; font-size: 10px;">{{ $badge['text'] }}</span>
                             @endforeach
                         </div>
+                        <div class="position-absolute bottom-0 left-0 pb-2 ms-3 z-index-1">
+                            @if(($prop['listing_type'] ?? 'jual') === 'sewa')
+                                <span class="badge font-weight-semibold px-2 py-1" style="background-color: #3730a3; color: #fff; border-radius: 4px; font-size: 10px;">Sewa</span>
+                            @elseif(($prop['listing_type'] ?? 'jual') === 'jual_sewa')
+                                <span class="badge font-weight-semibold px-2 py-1" style="background-color: #5b21b6; color: #fff; border-radius: 4px; font-size: 10px;">Jual / Sewa</span>
+                            @else
+                                <span class="badge font-weight-semibold px-2 py-1" style="background-color: #166534; color: #fff; border-radius: 4px; font-size: 10px;">Jual</span>
+                            @endif
+                        </div>
                         <img src="{{ url($prop['image']) }}" class="img-fluid" alt="{{ $prop['title'] }}" style="border-radius: 8px; height: 180px; width: 100%; object-fit: cover;">
+                    </div>
                     </div>
                     <div class="card-body px-3 py-2 d-flex flex-column">
                         <div class="d-flex justify-content-between align-items-center mb-1">
-                            <h4 class="font-weight-bold text-4 mb-0" style="color: #3b5998;">{{ $prop['price'] }}</h4>
+                            <h4 class="font-weight-bold text-4 mb-0" style="color: #3b5998;">{{ ($listingTypeFilter ?? 'jual') === 'sewa' ? ($prop['rent_price'] ?? $prop['price'] ?? '') : ($prop['price'] ?? $prop['rent_price'] ?? '') }}</h4>
                             <a href="{{ $prop['detail_url'] }}{{ $embedSuffix }}" onclick="event.stopPropagation()"><i class="fas fa-arrow-right" style="color: #3b5998; font-size: 14px;"></i></a>
                         </div>
                         <h5 class="font-weight-semibold text-3 mb-1 mt-2" style="line-height: 1.4; color: #333; font-size: 14px;">{{ $prop['title'] }}</h5>
@@ -643,9 +672,32 @@
 
         <div class="filter-panel-content">
 
+            {{-- Tipe Listing --}}
+            @if($sewaEnabled ?? false)
+            <div class="filter-section">
+                <div class="filter-section-title">Tipe Listing</div>
+                <div class="d-flex flex-wrap gap-2">
+                    <button type="button"
+                            class="filter-chip {{ ($listingTypeFilter ?? 'jual') === 'jual' ? 'selected' : '' }}"
+                            data-group="listing_type"
+                            data-value="jual"
+                            data-label="Dijual">
+                        <i class="fas fa-tag" style="font-size:13px;"></i> Dijual
+                    </button>
+                    <button type="button"
+                            class="filter-chip {{ ($listingTypeFilter ?? 'jual') === 'sewa' ? 'selected' : '' }}"
+                            data-group="listing_type"
+                            data-value="sewa"
+                            data-label="Disewa">
+                        <i class="fas fa-key" style="font-size:13px;"></i> Disewa
+                    </button>
+                </div>
+            </div>
+            @endif
+
             {{-- Project / Township --}}
             @if($townships->isNotEmpty())
-            <div class="filter-section">
+            <div class="filter-section mt-3">
                 <div class="filter-section-title">Project</div>
                 <div class="d-flex flex-wrap gap-2">
                     @foreach($townships as $twn)
@@ -806,6 +858,7 @@
         slug_type:      urlSlugs.type,
         sort:           '{{ $sort }}',
         twp:            '{{ request('twp') }}',
+        listing_type:   '{{ $listingTypeFilter ?? 'jual' }}',
     };
 
     // ── Build browse URL from slug segments + query params ─────────────────
@@ -903,6 +956,7 @@
         if (tagChips.length)     queryParams.tags = tagChips.join(',');
         if (selections.twp)      queryParams.twp  = selections.twp;
         if (keyword)             queryParams.q    = keyword;
+        if (selections.listing_type && selections.listing_type !== 'jual') queryParams.listing_type = selections.listing_type;
 
         window.location.href = buildBrowseUrl(newCond, newType, queryParams);
     });

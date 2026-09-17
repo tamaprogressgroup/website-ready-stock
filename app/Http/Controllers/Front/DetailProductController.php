@@ -47,6 +47,12 @@ class DetailProductController extends BaseFrontController
             abort(404, 'Properti tidak ditemukan.');
         }
 
+        // Kalau fitur Sewa nonaktif, properti yang murni Sewa (tidak dijual sama sekali)
+        // tidak boleh diakses langsung meski tahu URL/ID-nya.
+        if (!$this->sewaEnabled() && ($property['listing_type_raw'] ?? 'jual') === 'sewa') {
+            abort(404, 'Properti tidak ditemukan.');
+        }
+
         $relatedProperties = $this->resolveCache("related_properties:{$id}", $this->lang, fn() =>
             PropertyUnit::with([
                 'translations'              => fn($q) => $q->where('locale', $this->lang),
@@ -168,6 +174,19 @@ class DetailProductController extends BaseFrontController
         // Media (video, 360, youtube)
         $media = PropertyMedia::where('property_id', $unit->property_id)->first();
 
+        $sewaOn      = $this->sewaEnabled();
+        $isForSale   = !$sewaOn || in_array($unit->listing_type, ['jual', 'jual_sewa']);
+        $isForRent   = $sewaOn && in_array($unit->listing_type, ['sewa', 'jual_sewa']);
+        $rentDisplay = $unit->rent_price_display ?: 'both';
+        $showRentYear  = $isForRent && in_array($rentDisplay, ['year', 'both']) && $unit->rent_price_year > 0;
+        $showRentMonth = $isForRent && in_array($rentDisplay, ['month', 'both']) && $unit->rent_price_month > 0;
+
+        $furnishingLabels = [
+            'unfurnished'    => 'Unfurnished',
+            'semi_furnished' => 'Semi Furnished',
+            'furnished'      => 'Fully Furnished',
+        ];
+
         return [
             'property_id'      => $unit->property_id,
             'meta_title'       => $trans?->meta_title       ?? null,
@@ -175,10 +194,22 @@ class DetailProductController extends BaseFrontController
             'meta_description' => $trans?->meta_descriotion ?? null,
             'wa_url'           => $this->buildWaUrl($unit),
             'wa_phone'         => $this->buildWaPhone($unit),
-            'has_discount'     => $diskon > 0,
-            'price_display'    => $final,
-            'price_original'   => $original,
-            'discount_display' => $diskon > 0 ? $this->formatPrice($diskon) : null,
+            'has_discount'     => $isForSale && $diskon > 0,
+            'price_display'    => $isForSale && $price > 0 ? $final : null,
+            'price_original'   => $isForSale && $price > 0 ? $original : null,
+            'discount_display' => $isForSale && $diskon > 0 ? $this->formatPrice($diskon) : null,
+            'listing_type'          => $sewaOn ? $unit->listing_type : 'jual',
+            'listing_type_raw'      => $unit->listing_type,
+            'is_for_sale'           => $isForSale,
+            'is_for_rent'           => $isForRent,
+            'is_rented'             => $sewaOn && (bool) $unit->is_rented,
+            'rent_price_year_display'  => $showRentYear  ? $this->formatPrice((float) $unit->rent_price_year)  : null,
+            'rent_price_month_display' => $showRentMonth ? $this->formatPrice((float) $unit->rent_price_month) : null,
+            'min_rent_duration'     => $isForRent ? $unit->min_rent_duration : null,
+            'furnishing_status'     => $isForRent ? ($furnishingLabels[$unit->furnishing_status] ?? null) : null,
+            'availability_status'   => $isForRent ? $unit->availability_status : null,
+            'available_from_date'   => $isForRent ? $unit->available_from_date?->format('d M Y') : null,
+            'deposit_display'       => $isForRent && $unit->deposit_amount > 0 ? $this->formatPrice((float) $unit->deposit_amount) : null,
             'title'          => $trans?->title ?? $trans?->property_name ?? '-',
             'description'    => $trans?->description ?? '',
             'location'       => $location,

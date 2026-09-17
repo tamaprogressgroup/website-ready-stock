@@ -353,7 +353,7 @@
 					</button>
 					<div class="go-header-info">
 						<h6>{{ $property['title'] }}</h6>
-						<span>{{ $property['price_display'] }}</span>
+						<span>{{ $property['price_display'] ?? $property['rent_price_year_display'] ?? $property['rent_price_month_display'] ?? '' }}</span>
 					</div>
 				</div>
 				<div class="go-body">
@@ -498,8 +498,14 @@
 				<div class="col-lg-8 pe-lg-5">
 
 					{{-- 1. TAGS --}}
-					@if (!empty($property['tags']))
 					<div class="d-flex flex-wrap gap-2 mb-4">
+						@if(($property['listing_type'] ?? 'jual') === 'sewa')
+							<span class="badge text-white px-3 py-1" style="background-color: #0d6efd; font-size: 11px; border-radius: 20px; font-weight: 600; letter-spacing: 0.3px;">Sewa</span>
+						@elseif(($property['listing_type'] ?? 'jual') === 'jual_sewa')
+							<span class="badge text-white px-3 py-1" style="background-color: #0d6efd; font-size: 11px; border-radius: 20px; font-weight: 600; letter-spacing: 0.3px;">Jual / Sewa</span>
+						@else
+							<span class="badge text-white px-3 py-1" style="background-color: #166534; font-size: 11px; border-radius: 20px; font-weight: 600; letter-spacing: 0.3px;">Jual</span>
+						@endif
 						@foreach ($property['tags'] as $tag)
 							<span class="badge text-white px-3 py-1"
 								style="background-color: {{ $tag['bg'] }}; font-size: 11px; border-radius: 20px; font-weight: 600; letter-spacing: 0.3px;">
@@ -507,12 +513,12 @@
 							</span>
 						@endforeach
 					</div>
-					@endif
 
 					{{-- 2. PRICE + TITLE --}}
 					<div class="mb-4">
+						@if ($property['is_for_sale'] ?? true)
 						<div class="price-box mb-3">
-							<div class="text-color-grey text-2 mb-1 poppins-semibold" style="font-size: 14px;" >Harga</div>
+							<div class="text-color-grey text-2 mb-1 poppins-semibold" style="font-size: 14px;" >Harga Jual</div>
 							<div class="d-flex align-items-center flex-wrap gap-2">
 								<h2 class="poppins-bold mb-0" style="color: #1C5FA8; font-size: 32px;">{{ $property['price_display'] }}</h2>
 								@if ($property['has_discount'])
@@ -524,6 +530,42 @@
 								@endif
 							</div>
 						</div>
+						@endif
+
+						@if ($property['is_for_rent'] ?? false)
+						<div class="price-box mb-3">
+							<div class="text-color-grey text-2 mb-1 poppins-semibold" style="font-size: 14px;">
+								Harga Sewa
+								@if($property['is_rented']) <span class="badge bg-secondary ms-1">Sudah Tersewa</span> @endif
+							</div>
+							<div class="d-flex align-items-center flex-wrap gap-3">
+								@if($property['rent_price_year_display'])
+									<h2 class="poppins-bold mb-0" style="color: #1C5FA8; font-size: 28px;">{{ $property['rent_price_year_display'] }}<span class="text-3" style="font-size:14px;">/tahun</span></h2>
+									@if($property['rent_price_month_display'])
+										<span class="poppins-semibold text-color-grey" style="font-size: 16px;">{{ $property['rent_price_month_display'] }}/bulan</span>
+									@endif
+								@elseif($property['rent_price_month_display'])
+									<h2 class="poppins-bold mb-0" style="color: #1C5FA8; font-size: 28px;">{{ $property['rent_price_month_display'] }}<span class="text-3" style="font-size:14px;">/bulan</span></h2>
+								@endif
+							</div>
+							<div class="d-flex flex-wrap gap-3 mt-2" style="font-size: 13px;">
+								@if($property['furnishing_status'])
+									<span><i class="fas fa-couch me-1 text-color-grey"></i>{{ $property['furnishing_status'] }}</span>
+								@endif
+								@if($property['min_rent_duration'])
+									<span><i class="fas fa-calendar-alt me-1 text-color-grey"></i>Min. sewa {{ $property['min_rent_duration'] }} bulan</span>
+								@endif
+								@if($property['availability_status'] === 'available_from' && $property['available_from_date'])
+									<span><i class="fas fa-clock me-1 text-color-grey"></i>Tersedia mulai {{ $property['available_from_date'] }}</span>
+								@elseif($property['availability_status'] === 'available_now')
+									<span><i class="fas fa-check-circle me-1 text-color-grey"></i>Tersedia Sekarang</span>
+								@endif
+								@if($property['deposit_display'])
+									<span><i class="fas fa-hand-holding-usd me-1 text-color-grey"></i>Deposit {{ $property['deposit_display'] }}</span>
+								@endif
+							</div>
+						</div>
+						@endif
 						<h3 class="poppins-semibold text-color-dark mb-1" style="font-size: 24px; line-height: 1.3;">{{ $property['title'] }}</h3>
 						<p class="text-color-grey text-3 mb-0 poppins-regular" style="font-size: 14px;">
 							<i class="fas fa-map-marker-alt me-1" style="color: #aaa; "></i>{{ $property['location'] }}
@@ -828,8 +870,9 @@
 				@foreach ($relatedProperties as $prop)
 				<div class="col-lg-3 col-md-6 mb-4">
 					<div class="card related-card border border-color-grey-1 bg-white h-100" style="cursor:pointer;" onclick="window.location='{{ $prop['detail_url'] }}{{ $embedSuffix }}'">
-						<div class="position-relative p-2">
-							<div class="position-absolute top-0 left-0 pt-3 ms-3 z-index-1">
+						<div class="p-2">
+						<div class="position-relative">
+							<div class="position-absolute top-0 left-0 pt-2 ms-3 z-index-1">
 								@foreach ($prop['badges'] as $badge)
 									<span class="badge font-weight-semibold px-2 py-1 me-1"
 										style="background-color: {{ $badge['bg'] }}; color: {{ $badge['color'] }}; border-radius: 4px; font-size: 10px;">
@@ -837,19 +880,29 @@
 									</span>
 								@endforeach
 							</div>
+							<div class="position-absolute bottom-0 left-0 pb-2 ms-3 z-index-1">
+								@if(($prop['listing_type'] ?? 'jual') === 'sewa')
+									<span class="badge font-weight-semibold px-2 py-1" style="background-color: #3730a3; color: #fff; border-radius: 4px; font-size: 10px;">Sewa</span>
+								@elseif(($prop['listing_type'] ?? 'jual') === 'jual_sewa')
+									<span class="badge font-weight-semibold px-2 py-1" style="background-color: #5b21b6; color: #fff; border-radius: 4px; font-size: 10px;">Jual / Sewa</span>
+								@else
+									<span class="badge font-weight-semibold px-2 py-1" style="background-color: #166534; color: #fff; border-radius: 4px; font-size: 10px;">Jual</span>
+								@endif
+							</div>
 							<img src="{{ url($prop['image']) }}" class="img-fluid" alt="{{ $prop['title'] }}"
 								style="border-radius: 8px; height: 180px; width: 100%; object-fit: cover;">
 						</div>
-						<div class="card-body px-3 py-2">
+						</div>
+						<div class="card-body px-3 py-2 d-flex flex-column">
 							<div class="d-flex justify-content-between align-items-center mb-1">
-								<h4 class="font-weight-bold text-4 mb-0" style="color: #3b5998;">{{ $prop['price'] }}</h4>
+								<h4 class="font-weight-bold text-4 mb-0" style="color: #3b5998;">{{ $prop['price'] ?? $prop['rent_price'] ?? '' }}</h4>
 								<a href="{{ $prop['detail_url'] }}{{ $embedSuffix }}" onclick="event.stopPropagation()">
 									<i class="fas fa-arrow-right" style="color: #3b5998; font-size: 14px;"></i>
 								</a>
 							</div>
 							<h5 class="font-weight-semibold text-3 mb-1 mt-2" style="line-height: 1.4; color: #333; font-size: 14px;">{{ $prop['title'] }}</h5>
 							<p class="mb-2" style="font-size: 11px; color: #888;">{{ $prop['location'] }}</p>
-							<div class="d-flex justify-content-between align-items-center mb-3"
+							<div class="d-flex justify-content-between align-items-center mb-3 mt-auto"
 								style="font-size: 11px; color: #666; padding-bottom: 10px; border-bottom: 1px solid #eee;">
 								<div class="d-flex align-items-center">
 									<i class="fas fa-bed me-1" style="color: #a0a0a0;"></i>

@@ -19,7 +19,25 @@ class PropertyUnit extends Model
         'building_area', 'carports', 'electricity', 'is_active',
         'created_user_id', 'created_datetime', 'updated_user_id', 'updated_datetime',
         'condition_id', 'diskon', 'township_id', 'cluster_id', 'slug', 'no_hp',
+        'listing_type', 'rent_price_year', 'rent_price_month', 'rent_price_display', 'min_rent_duration',
+        'furnishing_status', 'availability_status', 'available_from_date',
+        'deposit_amount', 'is_rented',
     ];
+
+    protected $casts = [
+        'available_from_date' => 'date',
+        'is_rented' => 'boolean',
+    ];
+
+    public function scopeForSale($query)
+    {
+        return $query->whereIn('listing_type', ['jual', 'jual_sewa']);
+    }
+
+    public function scopeForRent($query)
+    {
+        return $query->whereIn('listing_type', ['sewa', 'jual_sewa'])->where('is_rented', 0);
+    }
 
     public function kota(): BelongsTo
     {

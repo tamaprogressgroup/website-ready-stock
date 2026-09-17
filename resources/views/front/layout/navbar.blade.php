@@ -1,4 +1,15 @@
 <style>
+/* ===== NUMBER INPUT — hilangkan tombol increment/decrement (spinner) di semua form front ===== */
+/* Murni visual, tidak mempengaruhi value/validasi — input type=number tetap berfungsi normal */
+input[type=number]::-webkit-outer-spin-button,
+input[type=number]::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+input[type=number] {
+    -moz-appearance: textfield;
+}
+
 /* ===== LOGO ===== */
 .header-logo-dark  { display: none !important; }
 .header-logo-light { display: block !important; }
@@ -366,6 +377,26 @@ li.nav-dropdown:hover .nav-dd-panel {
                                                Properti Baru
                                             </a>
                                         </li>
+
+                                        @if($navSewaEnabled ?? false)
+                                        {{-- Dijual --}}
+                                        <li style="display:flex;align-items:center;">
+                                            <a class="nav-link font-weight-semibold custom-nav-link poppins-semibold"
+                                               href="{{ route('front.all-products') }}?listing_type=jual{{ $navKeySuffix ? '&' . ltrim($navKeySuffix, '?') : '' }}"
+                                               style="padding: 10px 18px !important; margin: 0 3px;">
+                                               Dijual
+                                            </a>
+                                        </li>
+
+                                        {{-- Disewa --}}
+                                        <li style="display:flex;align-items:center;">
+                                            <a class="nav-link font-weight-semibold custom-nav-link poppins-semibold"
+                                               href="{{ route('front.all-products') }}?listing_type=sewa{{ $navKeySuffix ? '&' . ltrim($navKeySuffix, '?') : '' }}"
+                                               style="padding: 10px 18px !important; margin: 0 3px;">
+                                               Disewa
+                                            </a>
+                                        </li>
+                                        @endif
 
                                         {{-- Project (dropdown) --}}
                                         <li class="nav-dropdown" style="margin: 0 14px 0 3px;">

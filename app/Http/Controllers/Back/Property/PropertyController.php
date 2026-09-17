@@ -63,6 +63,9 @@ class PropertyController extends Controller
         if ($request->filled('condition_id')) {
             $base->where('condition_id', $request->condition_id);
         }
+        if ($request->filled('listing_type')) {
+            $base->where('listing_type', $request->listing_type);
+        }
         if ($request->filled('bedrooms')) {
             $br = (int) $request->bedrooms;
             $br >= 4 ? $base->where('bedrooms', '>=', 4) : $base->where('bedrooms', $br);
@@ -82,8 +85,9 @@ class PropertyController extends Controller
         foreach (self::STATUS_MAP as $key => $sid) {
             $counts[$key] = (clone $base)->where('status_id', $sid)->count();
         }
+        $counts['tersewa'] = (clone $base)->where('is_rented', 1)->count();
 
-        // Items for active tab
+        // Items for active tab — tab "tersewa" adalah dimensi lain (is_rented), independen dari status_id
         $items = (clone $base)->with([
             'translations'              => fn($q) => $q->where('locale', 'id'),
             'interiors'                 => fn($q) => $q->where('order', 1)->where('is_active', 1),
@@ -91,7 +95,11 @@ class PropertyController extends Controller
             'cluster',
             'township',
         ])
-        ->where('status_id', $statusId)
+        ->when(
+            $tab === 'tersewa',
+            fn($q) => $q->where('is_rented', 1),
+            fn($q) => $q->where('status_id', $statusId)
+        )
         ->when(
             $tab === 'tayang',
             fn($q) => $q->orderByRaw('CASE WHEN display_order IS NULL THEN 1 ELSE 0 END, display_order ASC, created_datetime DESC'),
@@ -189,8 +197,17 @@ class PropertyController extends Controller
             'extra_names'             => 'nullable|array',
             'extra_names.*'           => 'nullable|string|max:255',
             'no_hp'                   => 'nullable|string|max:20',
-            'price'                   => 'required|string',
+            'price'                   => 'nullable|string|required_if:listing_type,jual,jual_sewa',
             'discount'                => 'nullable|string',
+            'listing_type'            => 'required|in:jual,sewa,jual_sewa',
+            'rent_price_year'         => 'nullable|string',
+            'rent_price_month'        => 'nullable|string',
+            'rent_price_display'      => 'nullable|in:year,month,both',
+            'min_rent_duration'       => 'nullable|integer|min:0',
+            'furnishing_status'       => 'nullable|in:unfurnished,semi_furnished,furnished',
+            'availability_status'     => 'nullable|in:available_now,available_from',
+            'available_from_date'     => 'nullable|date',
+            'deposit_amount'          => 'nullable|string',
             'main_thumbnail'          => 'required|image|mimes:jpeg,png,jpg,webp|max:10240|dimensions:width=4096,height=2298',
             'interior_images'         => 'nullable|array',
             'interior_images.*'       => 'nullable|image|mimes:jpeg,png,jpg,webp|max:10240',
@@ -205,8 +222,15 @@ class PropertyController extends Controller
             'meta_descriotion'        => 'nullable|string|max:500',
         ]);
 
-        $cleanPrice    = (int) str_replace('.', '', $request->price);
-        $cleanDiscount = $request->filled('discount') ? (int) str_replace('.', '', $request->discount) : 0;
+        if (in_array($request->listing_type, ['sewa', 'jual_sewa']) && !$request->filled('rent_price_year') && !$request->filled('rent_price_month')) {
+            return redirect()->back()->withInput()->withErrors(['rent_price_year' => 'Harga sewa (per tahun atau per bulan) wajib diisi untuk tipe listing Sewa atau Jual / Sewa.']);
+        }
+
+        $cleanPrice      = $request->filled('price') ? (int) str_replace('.', '', $request->price) : null;
+        $cleanDiscount   = $request->filled('discount') ? (int) str_replace('.', '', $request->discount) : 0;
+        $cleanRentYear   = $request->filled('rent_price_year') ? (int) str_replace('.', '', $request->rent_price_year) : null;
+        $cleanRentMonth  = $request->filled('rent_price_month') ? (int) str_replace('.', '', $request->rent_price_month) : null;
+        $cleanDeposit    = $request->filled('deposit_amount') ? (int) str_replace('.', '', $request->deposit_amount) : null;
 
         $mainPath = $request->file('main_thumbnail')->store('properties/main', 'public');
 
@@ -250,6 +274,15 @@ class PropertyController extends Controller
                 'price'            => $cleanPrice,
                 'diskon'           => $cleanDiscount,
                 'no_hp'            => $request->no_hp ?: null,
+                'listing_type'         => $request->listing_type,
+                'rent_price_year'      => $cleanRentYear,
+                'rent_price_month'     => $cleanRentMonth,
+                'rent_price_display'   => $request->rent_price_display ?: 'both',
+                'min_rent_duration'    => $request->min_rent_duration ?: null,
+                'furnishing_status'    => $request->furnishing_status ?: null,
+                'availability_status'  => $request->availability_status ?: null,
+                'available_from_date'  => $request->available_from_date ?: null,
+                'deposit_amount'       => $cleanDeposit,
                 'status_id'        => 0,
                 'is_active'        => 1,
                 'created_user_id'  => $userId,
@@ -475,8 +508,17 @@ class PropertyController extends Controller
             'extra_names'             => 'nullable|array',
             'extra_names.*'           => 'nullable|string|max:255',
             'no_hp'                   => 'nullable|string|max:20',
-            'price'                   => 'required|string',
+            'price'                   => 'nullable|string|required_if:listing_type,jual,jual_sewa',
             'discount'                => 'nullable|string',
+            'listing_type'            => 'required|in:jual,sewa,jual_sewa',
+            'rent_price_year'         => 'nullable|string',
+            'rent_price_month'        => 'nullable|string',
+            'rent_price_display'      => 'nullable|in:year,month,both',
+            'min_rent_duration'       => 'nullable|integer|min:0',
+            'furnishing_status'       => 'nullable|in:unfurnished,semi_furnished,furnished',
+            'availability_status'     => 'nullable|in:available_now,available_from',
+            'available_from_date'     => 'nullable|date',
+            'deposit_amount'          => 'nullable|string',
             'main_thumbnail'          => 'nullable|image|mimes:jpeg,png,jpg,webp|max:10240|dimensions:width=4096,height=2298',
             'interior_images'         => 'nullable|array',
             'interior_images.*'       => 'nullable|image|mimes:jpeg,png,jpg,webp|max:10240',
@@ -495,8 +537,15 @@ class PropertyController extends Controller
             'meta_descriotion'        => 'nullable|string|max:500',
         ]);
 
-        $cleanPrice    = (int) str_replace('.', '', $request->price);
-        $cleanDiscount = $request->filled('discount') ? (int) str_replace('.', '', $request->discount) : 0;
+        if (in_array($request->listing_type, ['sewa', 'jual_sewa']) && !$request->filled('rent_price_year') && !$request->filled('rent_price_month')) {
+            return redirect()->back()->withInput()->withErrors(['rent_price_year' => 'Harga sewa (per tahun atau per bulan) wajib diisi untuk tipe listing Sewa atau Jual / Sewa.']);
+        }
+
+        $cleanPrice      = $request->filled('price') ? (int) str_replace('.', '', $request->price) : null;
+        $cleanDiscount   = $request->filled('discount') ? (int) str_replace('.', '', $request->discount) : 0;
+        $cleanRentYear   = $request->filled('rent_price_year') ? (int) str_replace('.', '', $request->rent_price_year) : null;
+        $cleanRentMonth  = $request->filled('rent_price_month') ? (int) str_replace('.', '', $request->rent_price_month) : null;
+        $cleanDeposit    = $request->filled('deposit_amount') ? (int) str_replace('.', '', $request->deposit_amount) : null;
 
         DB::beginTransaction();
         try {
@@ -516,6 +565,15 @@ class PropertyController extends Controller
                 'no_hp'            => $request->no_hp ?: null,
                 'price'            => $cleanPrice,
                 'diskon'           => $cleanDiscount,
+                'listing_type'         => $request->listing_type,
+                'rent_price_year'      => $cleanRentYear,
+                'rent_price_month'     => $cleanRentMonth,
+                'rent_price_display'   => $request->rent_price_display ?: 'both',
+                'min_rent_duration'    => $request->min_rent_duration ?: null,
+                'furnishing_status'    => $request->furnishing_status ?: null,
+                'availability_status'  => $request->availability_status ?: null,
+                'available_from_date'  => $request->available_from_date ?: null,
+                'deposit_amount'       => $cleanDeposit,
                 'updated_user_id'  => $userId,
                 'updated_datetime' => now(),
             ];
@@ -752,6 +810,26 @@ class PropertyController extends Controller
 
         $tab = array_flip(self::STATUS_MAP)[$statusId] ?? 'draft';
         return redirect()->route('customer.property', ['tab' => $tab])->with('success', 'Status properti berhasil diubah menjadi ' . self::STATUS_LABELS[$statusId] . '.');
+    }
+
+    public function updateRentStatus(Request $request, $id)
+    {
+        $userId = Auth::guard('admin')->id();
+        $unit   = PropertyUnit::where('created_user_id', $userId)->findOrFail($id);
+
+        if (!in_array($unit->listing_type, ['sewa', 'jual_sewa'])) {
+            return redirect()->back()->with('error', 'Properti ini tidak berstatus sewa.');
+        }
+
+        $unit->update([
+            'is_rented'        => $request->boolean('is_rented'),
+            'updated_user_id'  => $userId,
+            'updated_datetime' => now(),
+        ]);
+        $this->flushCaches($unit->property_id);
+
+        $message = $unit->is_rented ? 'Properti ditandai sudah tersewa.' : 'Properti ditandai tersedia lagi untuk disewa.';
+        return redirect()->back()->with('success', $message);
     }
 
     public function importableList(Request $request)

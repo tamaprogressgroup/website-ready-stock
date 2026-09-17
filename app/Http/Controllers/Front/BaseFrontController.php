@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Front;
 
 use App\Http\Controllers\Controller;
 use App\Models\PropertyUnit;
+use App\Models\Setting;
 use App\Redis\GetRedis;
 use App\Redis\SetRedis;
 use Illuminate\Support\Str;
@@ -11,6 +12,16 @@ use Illuminate\Support\Str;
 abstract class BaseFrontController extends Controller
 {
     protected string $lang = 'id';
+    private ?bool $sewaEnabledCache = null;
+
+    /**
+     * Master switch fitur Sewa (Settings > app_m_settings, key "sewa").
+     * Saat nonaktif, seluruh tampilan publik memperlakukan semua listing seolah "jual" biasa.
+     */
+    protected function sewaEnabled(): bool
+    {
+        return $this->sewaEnabledCache ??= Setting::isActive('sewa');
+    }
 
     /**
      * Ambil data dari Redis. Kalau kosong, jalankan $callback (query DB),
@@ -80,16 +91,24 @@ abstract class BaseFrontController extends Controller
             }
         }
 
+        $sewaOn    = $this->sewaEnabled();
+        $isForSale = !$sewaOn || in_array($unit->listing_type, ['jual', 'jual_sewa']);
+        $isForRent = $sewaOn && in_array($unit->listing_type, ['sewa', 'jual_sewa']);
+
         return [
-            'property_id' => $unit->property_id,
-            'detail_url'  => $this->buildDetailUrl($unit),
-            'wa_url'      => $this->buildWaUrl($unit),
-            'wa_phone'    => $this->buildWaPhone($unit),
-            'badges'      => $badges,
-            'image'       => $image,
-            'price'       => $this->formatPrice($price, $diskon),
-            'price_raw'   => $price,
-            'diskon_raw'  => $diskon,
+            'property_id'  => $unit->property_id,
+            'detail_url'   => $this->buildDetailUrl($unit),
+            'wa_url'       => $this->buildWaUrl($unit),
+            'wa_phone'     => $this->buildWaPhone($unit),
+            'badges'       => $badges,
+            'image'        => $image,
+            'price'        => $isForSale && $price > 0 ? $this->formatPrice($price, $diskon) : null,
+            'price_raw'    => $price,
+            'diskon_raw'   => $diskon,
+            'listing_type' => $sewaOn ? $unit->listing_type : 'jual',
+            'is_rented'    => $sewaOn && (bool) $unit->is_rented,
+            'rent_price'   => $isForRent ? $this->formatRentPrice($unit) : null,
+            'furnishing_status' => $unit->furnishing_status,
             'title'       => $trans?->title ?? $trans?->property_name ?? '-',
             'location'    => $location,
             'beds'        => $unit->bedrooms      ?? 0,
@@ -97,6 +116,27 @@ abstract class BaseFrontController extends Controller
             'lt'          => $unit->land_area     ?? 0,
             'lb'          => $unit->building_area ?? 0,
         ];
+    }
+
+    protected function formatRentPrice(PropertyUnit $unit): ?string
+    {
+        $display = $unit->rent_price_display ?: 'both';
+
+        if ($display === 'month') {
+            return $unit->rent_price_month > 0 ? $this->formatPrice((float) $unit->rent_price_month) . '/bulan' : null;
+        }
+
+        if ($display === 'year') {
+            return $unit->rent_price_year > 0 ? $this->formatPrice((float) $unit->rent_price_year) . '/tahun' : null;
+        }
+
+        if ($unit->rent_price_year > 0) {
+            return $this->formatPrice((float) $unit->rent_price_year) . '/tahun';
+        }
+        if ($unit->rent_price_month > 0) {
+            return $this->formatPrice((float) $unit->rent_price_month) . '/bulan';
+        }
+        return null;
     }
 
     protected function buildWaPhone(PropertyUnit $unit): string

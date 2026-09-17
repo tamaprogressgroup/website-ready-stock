@@ -53,6 +53,7 @@ Route::middleware('back.auth')->group(function () {
     Route::put('/customer/property/{id}',             [PropertyController::class, 'update'])->name('customer.property.update');
     Route::delete('/customer/property/{id}',          [PropertyController::class, 'destroy'])->name('customer.property.destroy');
     Route::patch('/customer/property/{id}/status',    [PropertyController::class, 'updateStatus'])->name('customer.property.status');
+    Route::patch('/customer/property/{id}/rent-status', [PropertyController::class, 'updateRentStatus'])->name('customer.property.rent-status');
     Route::post('/customer/property/reorder',         [PropertyController::class, 'reorder'])->name('customer.property.reorder');
     Route::get('/customer/property/tayang-for-order', [PropertyController::class, 'tayangForOrder'])->name('customer.property.tayang-for-order');
 
@@ -72,6 +73,9 @@ Route::middleware('back.auth')->group(function () {
     Route::get('/seo-pages',               [PageSeoController::class, 'index'])->name('back.seo-pages.index');
     Route::get('/seo-pages/{pageKey}/edit',[PageSeoController::class, 'edit'])->name('back.seo-pages.edit');
     Route::put('/seo-pages/{pageKey}',     [PageSeoController::class, 'update'])->name('back.seo-pages.update');
+
+    Route::get('/settings',          [\App\Http\Controllers\Back\SettingsController::class, 'index'])->name('back.settings.index');
+    Route::patch('/settings/{key}',  [\App\Http\Controllers\Back\SettingsController::class, 'update'])->name('back.settings.update');
 
     Route::get('/customer/short-links',           [\App\Http\Controllers\Back\ShortLinkController::class, 'index'])->name('customer.short-links.index');
     Route::post('/customer/short-links',          [\App\Http\Controllers\Back\ShortLinkController::class, 'store'])->name('customer.short-links.store');

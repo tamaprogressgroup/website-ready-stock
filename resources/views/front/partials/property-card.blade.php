@@ -11,11 +11,22 @@
             @endforeach
         </div>
         @endif
+        <div class="position-absolute pb-2 ps-2 z-index-1" style="bottom: 0; left: 0;">
+            @if(($prop['listing_type'] ?? 'jual') === 'sewa')
+                <span class="badge poppins-medium px-3 py-1" style="background-color: #3730a3; color: #fff; border-radius: 15px; font-size: 11px;">Sewa</span>
+            @elseif(($prop['listing_type'] ?? 'jual') === 'jual_sewa')
+                <span class="badge poppins-medium px-3 py-1" style="background-color: #5b21b6; color: #fff; border-radius: 15px; font-size: 11px;">Jual / Sewa</span>
+            @else
+                <span class="badge poppins-medium px-3 py-1" style="background-color: #166534; color: #fff; border-radius: 15px; font-size: 11px;">Jual</span>
+            @endif
+        </div>
         <img src="{{ asset($prop['image']) }}" alt="{{ $prop['title'] }}" class="property-card-img">
     </div>
     <div class="card-body px-0 py-3">
         <div class="d-flex justify-content-between align-items-center mb-2">
-            <span class="property-card-price poppins-bold" style="font-size: 16.8px;" >{{ $prop['price'] }}</span>
+            <span class="property-card-price poppins-bold" style="font-size: 16.8px;">
+                {{ $prop['price'] ?? $prop['rent_price'] ?? '' }}
+            </span>
             <a href="{{ $prop['detail_url'] }}" class="text-decoration-none"
                style="color: #3b5998;">
                 <i class="fas fa-arrow-right" style="font-size: 15px;"></i>
