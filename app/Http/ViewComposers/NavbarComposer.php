@@ -7,6 +7,7 @@ use App\Models\LocationArea;
 use App\Models\PropertyCondition;
 use App\Models\PropertyType;
 use App\Models\Provinsi;
+use App\Models\Setting;
 use Illuminate\Support\Str;
 use Illuminate\View\View;
 
@@ -69,12 +70,15 @@ class NavbarComposer
             ])->values())
             ->toArray();
 
+        $navSewaEnabled = Setting::isActive('sewa');
+
         $view->with(compact(
             'navConditions',
             'navPropertyTypes',
             'navProvinces',
             'navAreasByProvince',
             'navKotaByProvince',
+            'navSewaEnabled',
         ));
     }
 }

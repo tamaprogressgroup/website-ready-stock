@@ -9,6 +9,7 @@ use App\Models\PageSeo;
 use App\Models\PropertyCondition;
 use App\Models\PropertyType;
 use App\Models\PropertyUnit;
+use App\Models\Setting;
 use App\Models\Tag;
 use App\Models\Township;
 use App\Redis\GetRedis;
@@ -145,6 +146,9 @@ class AllProductController extends BaseFrontController
         ->where('is_active', 1)
         ->where('status_id', 1);
 
+        $sewaEnabled       = Setting::isActive('sewa');
+        $listingTypeFilter = $sewaEnabled && $request->input('listing_type', 'jual') === 'sewa' ? 'sewa' : 'jual';
+
         // URL-path slug filters (take priority)
         if ($conditionId)    $query->where('condition_id',     $conditionId);
         if ($typeId)         $query->where('property_type_id', $typeId);
@@ -204,6 +208,12 @@ class AllProductController extends BaseFrontController
             }
         }
 
+        // Hitung jumlah per tipe transaksi (pakai semua filter di atas) sebelum scope jual/sewa diterapkan
+        $jualCount = (clone $query)->forSale()->count();
+        $sewaCount = $sewaEnabled ? (clone $query)->forRent()->count() : 0;
+
+        $listingTypeFilter === 'sewa' ? $query->forRent() : $query->forSale();
+
         $sort = $request->input('sort', 'newest');
         match ($sort) {
             'price_asc'  => $query->orderBy('price',         'asc'),
@@ -234,13 +244,16 @@ class AllProductController extends BaseFrontController
             ->where('longtidure', '!=', 0)
             ->limit(500)
             ->get()
-            ->map(function (PropertyUnit $u) {
+            ->map(function (PropertyUnit $u) use ($listingTypeFilter) {
                 $card = $this->formatCard($u);
+                $displayPrice = $listingTypeFilter === 'sewa'
+                    ? ($card['rent_price'] ?? $card['price'] ?? '')
+                    : ($card['price'] ?? $card['rent_price'] ?? '');
                 return [
                     'lat'   => (float) $u->latitude,
                     'lng'   => (float) $u->longtidure,
                     'title' => $card['title'],
-                    'price' => $card['price'],
+                    'price' => $displayPrice,
                     'image' => url($card['image']),
                     'url'   => url($card['detail_url']),
                 ];
@@ -252,13 +265,47 @@ class AllProductController extends BaseFrontController
             ? (object) $pageSeoArr
             : PageSeo::where('page_key', 'all_products')->first();
 
+        // ─── SEO title/description dinamis — supaya tiap kombinasi filter/slug ───
+        // (kondisi, tipe, project/kota, sewa) punya title unik, tidak duplikat.
+        // Tanpa ini Google melihat title yang sama persis di banyak URL berbeda
+        // (mis. /all-products?twp=1 vs ?twp=2) dan akhirnya menulis-ulang title
+        // sendiri di hasil pencarian — jadi tidak konsisten dan tidak deskriptif.
+        $effConditionId = $conditionId ?: ($request->filled('condition_id') ? (int) $request->condition_id : null);
+        $effTypeId      = $typeId      ?: ($request->filled('property_type') ? (int) $request->property_type : null);
+        $effTownshipId  = $townshipId  ?: ($request->filled('township') ? (int) $request->township : ($request->filled('twp') ? (int) $request->twp : null));
+
+        $conditionName = $slugNames['condition'] ?? ($effConditionId
+            ? collect($propertyConditions)->firstWhere('property_condition_id', $effConditionId)['translations'][0]['condition_name'] ?? null
+            : null);
+        $typeName = $slugNames['type'] ?? ($effTypeId
+            ? collect($propertyTypes)->firstWhere('property_type_id', $effTypeId)['translations'][0]['type_name'] ?? null
+            : null);
+        $townshipName = $slugNames['township'] ?? ($effTownshipId
+            ? $townships->firstWhere('township_id', $effTownshipId)?->township_name
+            : null);
+        $areaName = $slugNames['kota'] ?? null;
+
+        $titleContext = implode(' ', array_filter([$conditionName, $typeName, $townshipName ?: $areaName]));
+        if ($listingTypeFilter === 'sewa') {
+            $titleContext = trim('Disewa ' . $titleContext);
+        }
+
+        $baseTitle       = $pageSeo?->meta_title ?: 'Rumah Siap Huni';
+        $baseDescription = $pageSeo?->meta_description ?: '';
+
+        $seoTitle       = $titleContext !== '' ? "{$titleContext} - {$baseTitle}" : $baseTitle;
+        $seoDescription = $titleContext !== ''
+            ? trim("Temukan pilihan {$titleContext} yang tersedia. {$baseDescription}")
+            : $baseDescription;
+
         $keyData = EmbedKeyService::resolve();
 
         return view('front.layout.readyStockAllProduct', compact(
             'propertyTypes', 'propertyConditions', 'banner',
             'properties', 'totalCount', 'page', 'totalPages', 'sort',
             'urlSlugs', 'slugNames', 'browseBase', 'mapMarkers', 'keyData', 'pageSeo',
-            'townships', 'availableTags'
+            'townships', 'availableTags', 'listingTypeFilter', 'jualCount', 'sewaCount', 'sewaEnabled',
+            'seoTitle', 'seoDescription'
         ));
     }
 

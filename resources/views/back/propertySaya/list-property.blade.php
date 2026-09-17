@@ -35,6 +35,10 @@
     .badge-status-tayang  { background:#d1fae5; color:#065f46; padding:4px 10px; border-radius:12px; font-size:11px; font-weight:600; }
     .badge-status-tunda   { background:#fee2e2; color:#991b1b; padding:4px 10px; border-radius:12px; font-size:11px; font-weight:600; }
     .badge-status-terjual { background:#dbeafe; color:#1e40af; padding:4px 10px; border-radius:12px; font-size:11px; font-weight:600; }
+    .badge-listing-jual      { background:#dcfce7; color:#166534; padding:4px 10px; border-radius:12px; font-size:11px; font-weight:600; white-space:nowrap; }
+    .badge-listing-sewa      { background:#e0e7ff; color:#3730a3; padding:4px 10px; border-radius:12px; font-size:11px; font-weight:600; white-space:nowrap; }
+    .badge-listing-jual-sewa { background:#ede9fe; color:#5b21b6; padding:4px 10px; border-radius:12px; font-size:11px; font-weight:600; white-space:nowrap; }
+    .badge-listing-tersewa   { background:#e2e8f0; color:#334155; padding:4px 10px; border-radius:12px; font-size:11px; font-weight:600; white-space:nowrap; }
     .btn-dot { background:white; border:1px solid #e0e0e0; border-radius:6px; width:38px; height:38px; display:inline-flex; align-items:center; justify-content:center; color:#6c757d; cursor:pointer; }
     .btn-dot.dropdown-toggle::after { display:none; }
     .section-subtitle { font-size:13px; color:#8c98a4; margin-bottom:20px; }
@@ -108,8 +112,9 @@
 
         {{-- Filter row --}}
         @php
-            $activeFilters = array_filter(request()->only(['search','property_type_id','cluster_id','township_id','condition_id','bedrooms','price_range']));
+            $activeFilters = array_filter(request()->only(['search','property_type_id','cluster_id','township_id','condition_id','bedrooms','price_range','listing_type']));
             $priceOptions  = ['lt500'=>'< 500 Juta','500to1b'=>'500 Jt - 1 M','1bto2b'=>'1 - 2 Miliar','2bto5b'=>'2 - 5 Miliar','gt5b'=>'> 5 Miliar'];
+            $listingTypeOptions = ['jual'=>'Dijual','sewa'=>'Sewa','jual_sewa'=>'Dijual / Sewa'];
         @endphp
         <div class="d-flex gap-2 mb-4 flex-wrap align-items-center">
 
@@ -199,6 +204,18 @@
                 <i class="fas fa-chevron-down icon-right"></i>
             </label>
 
+            {{-- Tipe Listing --}}
+            <label class="filter-select-wrap {{ request('listing_type') ? 'is-active' : '' }}">
+                <i class="fas fa-key icon-left"></i>
+                <select name="listing_type" onchange="this.form.submit()">
+                    <option value="">Semua Tipe Listing</option>
+                    @foreach($listingTypeOptions as $val => $lbl)
+                        <option value="{{ $val }}" {{ request('listing_type') === $val ? 'selected' : '' }}>{{ $lbl }}</option>
+                    @endforeach
+                </select>
+                <i class="fas fa-chevron-down icon-right"></i>
+            </label>
+
             {{-- Reset --}}
             @if(count($activeFilters))
                 <a href="{{ route('customer.property', ['tab' => $tab]) }}" class="filter-pill filter-reset">
@@ -218,6 +235,7 @@
                     'tayang'  => 'Tayang',
                     'tunda'   => 'Tunda',
                     'terjual' => 'Terjual',
+                    'tersewa' => 'Tersewa',
                 ];
             @endphp
             @foreach($tabs as $key => $label)
@@ -284,6 +302,24 @@
                                 <span class="{{ $statusClasses[$item->status_id] ?? 'badge-status-draft' }}">
                                     {{ $statusLabels[$item->status_id] ?? '-' }}
                                 </span>
+                                @if($item->listing_type === 'sewa')
+                                    <span class="badge-listing-sewa">
+                                        <i class="fas fa-key me-1"></i>Sewa
+                                    </span>
+                                @elseif($item->listing_type === 'jual_sewa')
+                                    <span class="badge-listing-jual-sewa">
+                                        <i class="fas fa-exchange-alt me-1"></i>Dijual / Sewa
+                                    </span>
+                                @else
+                                    <span class="badge-listing-jual">
+                                        <i class="fas fa-tag me-1"></i>Dijual
+                                    </span>
+                                @endif
+                                @if(in_array($item->listing_type, ['sewa', 'jual_sewa']) && $item->is_rented)
+                                    <span class="badge-listing-tersewa">
+                                        <i class="fas fa-lock me-1"></i>Tersewa
+                                    </span>
+                                @endif
                                 @if($typeTrans)
                                     <span class="badge bg-light text-secondary border" style="font-size:11px; font-weight:500;">
                                         {{ $typeTrans->type_name }}
@@ -310,9 +346,21 @@
                         <h3 class="property-title">{{ $trans?->title ?? '(Tanpa Judul)' }}</h3>
 
                         <div class="mb-2">
-                            <span class="property-price">Rp {{ number_format($item->price, 0, ',', '.') }}</span>
-                            @if($item->diskon > 0)
-                                <span class="text-muted ms-2" style="font-size:12px;">Diskon: Rp {{ number_format($item->diskon, 0, ',', '.') }}</span>
+                            @if(in_array($item->listing_type, ['jual', 'jual_sewa']) && $item->price > 0)
+                                <span class="property-price">Rp {{ number_format($item->price, 0, ',', '.') }}</span>
+                                @if($item->diskon > 0)
+                                    <span class="text-muted ms-2" style="font-size:12px;">Diskon: Rp {{ number_format($item->diskon, 0, ',', '.') }}</span>
+                                @endif
+                            @endif
+                            @if(in_array($item->listing_type, ['sewa', 'jual_sewa']))
+                                <div style="font-size:13px;">
+                                    @if($item->rent_price_year > 0)
+                                        <span class="property-price" style="font-size:15px;">Rp {{ number_format($item->rent_price_year, 0, ',', '.') }}/tahun</span>
+                                    @endif
+                                    @if($item->rent_price_month > 0)
+                                        <span class="text-muted ms-2">Rp {{ number_format($item->rent_price_month, 0, ',', '.') }}/bulan</span>
+                                    @endif
+                                </div>
                             @endif
                         </div>
 
@@ -348,14 +396,21 @@
                                         <i class="fas fa-pause me-1"></i> Tunda
                                     </button>
                                 </form>
-                                <form action="{{ route('customer.property.status', $item->property_id) }}" method="POST" class="d-inline"
-                                      onsubmit="return confirm('Tandai properti ini sebagai Terjual?')">
-                                    @csrf @method('PATCH')
-                                    <input type="hidden" name="status_id" value="3">
-                                    <button type="submit" class="btn btn-sm btn-secondary" style="border-radius:6px;">
+                                @if(in_array($item->listing_type, ['jual', 'jual_sewa']))
+                                    <form id="form-terjual-{{ $item->property_id }}" action="{{ route('customer.property.status', $item->property_id) }}" method="POST" class="d-none">
+                                        @csrf @method('PATCH')
+                                        <input type="hidden" name="status_id" value="3">
+                                    </form>
+                                    <button type="button" class="btn btn-sm btn-confirm-action" style="border-radius:6px; background:#2b4c8a; border-color:#2b4c8a; color:#fff;"
+                                            data-form="form-terjual-{{ $item->property_id }}"
+                                            data-title="Tandai Terjual?"
+                                            data-message="Properti ini akan ditandai sudah terjual dan berpindah ke tab Terjual. Status ini bersifat final — properti tidak bisa diedit lagi setelah ini."
+                                            data-modal-icon="fas fa-handshake"
+                                            data-icon-bg="#e0e7ff" data-icon-color="#3730a3"
+                                            data-confirm-label="Ya, Tandai Terjual" data-confirm-bg="#2b4c8a" data-confirm-text="#fff">
                                         <i class="fas fa-handshake me-1"></i> Tandai Terjual
                                     </button>
-                                </form>
+                                @endif
                             @elseif($item->status_id === 2)
                                 <form action="{{ route('customer.property.status', $item->property_id) }}" method="POST" class="d-inline">
                                     @csrf @method('PATCH')
@@ -366,6 +421,38 @@
                                 </form>
                             @elseif($item->status_id === 3)
                                 <span class="text-muted" style="font-size:12px;"><i class="fas fa-lock me-1"></i> Terjual</span>
+                            @endif
+
+                            @if(in_array($item->listing_type, ['sewa', 'jual_sewa']) && $item->status_id === 1)
+                                @if(!$item->is_rented)
+                                    <form id="form-tersewa-{{ $item->property_id }}" action="{{ route('customer.property.rent-status', $item->property_id) }}" method="POST" class="d-none">
+                                        @csrf @method('PATCH')
+                                        <input type="hidden" name="is_rented" value="1">
+                                    </form>
+                                    <button type="button" class="btn btn-sm btn-confirm-action" style="border-radius:6px; background:#2b4c8a; border-color:#2b4c8a; color:#fff;"
+                                            data-form="form-tersewa-{{ $item->property_id }}"
+                                            data-title="Tandai Tersewa?"
+                                            data-message="Properti ini akan ditandai sudah tersewa dan otomatis hilang dari listing Sewa di halaman depan, sampai kamu batalkan lagi."
+                                            data-modal-icon="fas fa-key"
+                                            data-icon-bg="#e0e7ff" data-icon-color="#3730a3"
+                                            data-confirm-label="Ya, Tandai Tersewa" data-confirm-bg="#2b4c8a" data-confirm-text="#fff">
+                                        <i class="fas fa-key me-1"></i> Tandai Tersewa
+                                    </button>
+                                @else
+                                    <form id="form-batal-sewa-{{ $item->property_id }}" action="{{ route('customer.property.rent-status', $item->property_id) }}" method="POST" class="d-none">
+                                        @csrf @method('PATCH')
+                                        <input type="hidden" name="is_rented" value="0">
+                                    </form>
+                                    <button type="button" class="btn btn-sm btn-confirm-action" style="border-radius:6px; background:#fff; border:1px solid #2b4c8a; color:#2b4c8a;"
+                                            data-form="form-batal-sewa-{{ $item->property_id }}"
+                                            data-title="Batalkan Status Sewa?"
+                                            data-message="Properti ini akan ditandai tersedia lagi dan kembali muncul di listing Sewa di halaman depan."
+                                            data-modal-icon="fas fa-undo"
+                                            data-icon-bg="#f1f5f9" data-icon-color="#334155"
+                                            data-confirm-label="Ya, Batalkan" data-confirm-bg="#6c757d" data-confirm-text="#fff">
+                                        <i class="fas fa-undo me-1"></i> Batalkan Sewa
+                                    </button>
+                                @endif
                             @endif
 
                             {{-- Hapus — tersedia untuk semua status --}}
@@ -451,6 +538,41 @@
     </div>
 </div>
 
+{{-- Modal Konfirmasi Aksi (generik — dipakai Tandai Terjual / Tandai Tersewa / Batalkan Sewa) --}}
+<div class="modal fade" id="actionConfirmModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered" style="max-width:440px;">
+        <div class="modal-content border-0" style="border-radius:16px; overflow:hidden; box-shadow:0 20px 60px rgba(0,0,0,0.18);">
+
+            <div class="modal-header border-0 pb-0" id="action-modal-header" style="background:#f4f7fc; padding:28px 28px 20px;">
+                <div class="d-flex align-items-center gap-3">
+                    <div id="action-modal-icon-wrap" style="width:48px;height:48px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0;">
+                        <i id="action-modal-icon" style="font-size:20px;"></i>
+                    </div>
+                    <div>
+                        <h5 id="action-modal-title" class="modal-title mb-0 fw-bold" style="color:#1a1a1a;font-size:18px;"></h5>
+                    </div>
+                </div>
+            </div>
+
+            <div class="modal-body" style="padding:20px 28px 8px;">
+                <p id="action-modal-message" style="font-size:14px;color:#495057;margin-bottom:0;line-height:1.5;"></p>
+            </div>
+
+            <div class="modal-footer border-0" style="padding:20px 28px 28px;gap:10px;">
+                <button type="button" class="btn fw-semibold px-4"
+                        data-bs-dismiss="modal"
+                        style="border-radius:10px;border:1px solid #e0e0e0;color:#495057;background:#fff;font-size:14px;height:44px;">
+                    Batal
+                </button>
+                <button type="button" id="action-modal-confirm-btn" class="btn fw-semibold px-4"
+                        style="border-radius:10px;font-size:14px;height:44px;">
+                </button>
+            </div>
+
+        </div>
+    </div>
+</div>
+
 {{-- ===== Modal Atur Urutan (Tayang tab only) ===== --}}
 @if($tab === 'tayang')
 <div class="modal fade" id="orderModal" tabindex="-1" aria-hidden="true">
@@ -507,6 +629,34 @@ function openDeleteModal(actionUrl, propertyName) {
     var modal = new bootstrap.Modal(document.getElementById('deletePropertyModal'));
     modal.show();
 }
+
+// ── Modal konfirmasi generik untuk tombol aksi (Tandai Terjual / Tersewa / Batalkan Sewa) ──
+(function () {
+    var confirmBtn = document.getElementById('action-modal-confirm-btn');
+
+    document.querySelectorAll('.btn-confirm-action').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+            var form = document.getElementById(this.dataset.form);
+
+            document.getElementById('action-modal-icon-wrap').style.background = this.dataset.iconBg;
+            var icon = document.getElementById('action-modal-icon');
+            icon.className = this.dataset.modalIcon;
+            icon.style.color = this.dataset.iconColor;
+            document.getElementById('action-modal-title').textContent   = this.dataset.title;
+            document.getElementById('action-modal-message').textContent = this.dataset.message;
+
+            confirmBtn.className      = 'btn fw-semibold px-4';
+            confirmBtn.style.background = this.dataset.confirmBg;
+            confirmBtn.style.borderColor = this.dataset.confirmBg;
+            confirmBtn.style.color      = this.dataset.confirmText;
+            confirmBtn.textContent = this.dataset.confirmLabel;
+            confirmBtn.onclick = function () { form.submit(); };
+
+            var modal = new bootstrap.Modal(document.getElementById('actionConfirmModal'));
+            modal.show();
+        });
+    });
+})();
 </script>
 
 @if($tab === 'tayang')

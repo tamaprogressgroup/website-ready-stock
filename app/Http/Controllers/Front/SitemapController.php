@@ -10,7 +10,8 @@ class SitemapController extends BaseFrontController
 {
     public function index(): Response
     {
-        $lang = $this->lang;
+        $lang    = $this->lang;
+        $sewaOn  = $this->sewaEnabled();
 
         $units = PropertyUnit::with([
             'translations'              => fn($q) => $q->where('locale', $lang),
@@ -23,6 +24,7 @@ class SitemapController extends BaseFrontController
         ->where('status_id', 1)
         ->whereNotNull('slug')
         ->where('slug', '!=', '')
+        ->when(!$sewaOn, fn($q) => $q->where('listing_type', '!=', 'sewa'))
         ->orderBy('updated_datetime', 'desc')
         ->get();
 
